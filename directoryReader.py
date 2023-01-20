@@ -6,3 +6,5 @@ for i in dir:
     if ".mp4" in i:
 
         print(i.rstrip(i[-1]))
+
+#this is an edit
