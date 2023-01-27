@@ -6,27 +6,28 @@ dir = os.listdir()
 for i in dir:
     if ".mp4" in i:
         vid = cv2.VideoCapture(i)
-        file = i
+        file = i[:-4:]
         break
+
+
 
 i = 0
 while(True):  
-    if not os.path.exists(file):
-        print('Folder name: 20221223_121307_Frames{}'.format(i))
-        os.makedirs('20221223_121307_Frames{}'.format(i))
+    if not os.path.exists("%s_Frames_%d" % (file, i)):
+        print('Folder name: %s_Frames_%d' % (file, i))
+        os.makedirs('%s_Frames_%d' % (file, i))
         break
     else:
-        print('Tried: 20221223_121307_Frames{}'.format(i))
+        print('Tried: 20221223_121307_Frames_%d' % i)
         i+=1
 
 frameN = 0
-
 while(True):
     ret,frame = vid.read()
     
     if ret:
-        name = './20221223_121307_Frames/20221223_121307_frame{}.jpg'.format(str(frameN))
-        print('generating frame #{}'.format(frameN))
+        name = './%s_Frames_%d/%s_frame%d.png' % (file, i, file, frameN)
+        print('generating frame #%d' % frameN)
 
         cv2.imwrite(name, frame)
 
@@ -36,4 +37,5 @@ while(True):
 
 print('done')
 vid.release()
-cv2.destroyAllWindows
+
+#https://www.tutorialspoint.com/how-to-compare-two-images-in-opencv-python

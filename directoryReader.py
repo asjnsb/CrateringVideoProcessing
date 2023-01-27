@@ -7,4 +7,3 @@ for i in dir:
 
         print(i.rstrip(i[-1]))
 
-#this is an edit
