@@ -102,4 +102,4 @@ cv2.waitKey(0)
 cv2.destroyAllWindows
 
 #LAST: Found the errors in a real video, but even after plotting, there is no obvious difference in "err" between before and after the jet starts 
-#NEXT: Try using larger time steps, and don't compare every subsaquent frame
+#NEXT: Try using larger time steps, and don't compare every subsaquent frame. Also: had to remove large video files from the repo, so now the search function needs to be able to look somewhere else.
