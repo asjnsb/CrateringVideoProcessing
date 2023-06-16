@@ -1,16 +1,25 @@
 import cv2
 import os
 import numpy as np 
+import matplotlib.pyplot as plt
 
 def FrameXtract():
     dir = os.listdir()
+    search = [".mp4"]
+    search.append(input("Search term: "))
+    for i in range(len(search)):
+        search[i] = search[i].lower()
 
     #find a .mp4 in the current directory
-    for i in dir: 
-        if ".mp4" in i:
+    for i in dir:
+        if all([x in i.lower() for x in search]):
             vid = cv2.VideoCapture(i)
             file = i[:-4:]
             break
+        elif i == dir[len(dir)-1]:
+            file = "NotFound"
+            raise SystemExit("File not found.")
+
 
     #create a folder for the frames
     i = 0
@@ -32,6 +41,8 @@ def FrameXtract():
         
         if ret:
             if frameN < 10:
+                name = './%s_Frames_%d/%s_frame00%d.png' % (file, i, file, frameN)
+            elif frameN < 100:
                 name = './%s_Frames_%d/%s_frame0%d.png' % (file, i, file, frameN)
             else:
                 name = './%s_Frames_%d/%s_frame%d.png' % (file, i, file, frameN)
@@ -55,14 +66,18 @@ def mse(img1, img2): #claculates the mean square of the errors of two images
     mse = err/(float(h*w))
     return mse, diff #mse is the value of the error, diff is the visual difference between the images
 
+
 frameFolder = FrameXtract() + '\\' #run FrameXtract and save the directory where the frames are stored
 frDir = os.listdir(frameFolder)
+
+xData = []
+yData = []
 
 frameN = 0
 for i in frDir:
     #find the mean square of the errors between the last image and the current one
     
-    if "frame00." in i:
+    if "frame000." in i:
         lasttitle = i
         lastImg = cv2.imread(frameFolder + i)
         continue
@@ -70,8 +85,10 @@ for i in frDir:
     
     err, diff = mse(cv2.cvtColor(lastImg, cv2.COLOR_BGR2GRAY), cv2.cvtColor(curImg, cv2.COLOR_BGR2GRAY))
     
+    yData.append(err)
+    xData.append(frameN)
     
-    #cv2.imshow("%s vs %s = %f" %(lasttitle, i, err), diff) #displays all the difference images
+    cv2.imshow("%s vs %s = %f" %(lasttitle, i, err), diff) #displays all the difference images
     #print("%s vs %s = %f" %(lasttitle, i, err)) #prints all errors
     
     lasttitle = i
@@ -79,8 +96,10 @@ for i in frDir:
     frameN += 1
 #end MSE comparisons
 
+plt.plot(yData)
+plt.show()
 cv2.waitKey(0)
 cv2.destroyAllWindows
 
-#LAST: program can take a video file, split it into frames, and find the difference between each sequential frame
-#NEXT: NEED A REAL VIDEO TO PROGRESS; use the errors to cut out the dead time from the video
+#LAST: Found the errors in a real video, but even after plotting, there is no obvious difference in "err" between before and after the jet starts 
+#NEXT: Try using larger time steps, and don't compare every subsaquent frame
