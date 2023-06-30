@@ -1,6 +1,6 @@
 import os
 
-Dir = "20221223_121307"
+Dir = "directorytesterTESTDIR"
 
-if not os.path.exists(Dir):
-    os.makedirs(Dir)
+absPath = os.path.dirname(__file__)
+print(absPath)
