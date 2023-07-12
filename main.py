@@ -4,33 +4,38 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def FrameXtract():
-    dir = os.listdir()
+    path = dirFinder()
+    dir = os.listdir(path)
     search = [".mp4"]
     search.append(input("Search term: "))
     for i in range(len(search)):
         search[i] = search[i].lower()
-
+    
     #find a .mp4 in the current directory
-    for i in dir:
-        if all([x in i.lower() for x in search]):
-            vid = cv2.VideoCapture(i)
-            file = i[:-4:]
-            break
-        elif i == dir[len(dir)-1]:
-            file = "NotFound"
-            raise SystemExit("File not found.")
+    if dir:
+        for i in dir:
+            if dir and all([x in i.lower() for x in search]):
+                vid = cv2.VideoCapture(os.path.join(path, i))
+                file = i[:-4:]
+                break
+            elif i == dir[len(dir)-1]:
+                file = "NotFound"
+                raise SystemExit("File not found.")
+    else:
+        raise SystemExit("Dir is empty")
 
 
     #create a folder for the frames
     i = 0
-    while(True):  
-        if not os.path.exists("%s_Frames_%d" % (file, i)):
-            print('Folder name: %s_Frames_%d' % (file, i))
-            os.makedirs('%s_Frames_%d' % (file, i))
-            newDir = '%s_Frames_%d' % (file, i)
+    while(True):
+        framePath = os.path.join(path, ("%s_Frames_%d" % (file, i)))
+        if not os.path.exists(framePath):
+            print('Folder name: %s' % (framePath))
+            os.makedirs(framePath)
+            newDir = framePath
             break
         else:
-            print('Tried: %s_Frames_%d' % (file, i))
+            print('Tried: %s' % (framePath))
             i+=1
 
 
@@ -41,11 +46,11 @@ def FrameXtract():
         
         if ret:
             if frameN < 10:
-                name = './%s_Frames_%d/%s_frame00%d.png' % (file, i, file, frameN)
+                name = os.path.join(framePath, '%s_frame00%d.png' % (file, frameN))
             elif frameN < 100:
-                name = './%s_Frames_%d/%s_frame0%d.png' % (file, i, file, frameN)
+                name = os.path.join(framePath, '%s_frame0%d.png' % (file, frameN))
             else:
-                name = './%s_Frames_%d/%s_frame%d.png' % (file, i, file, frameN)
+                name = os.path.join(framePath, '%s_frame%d.png' % (file, frameN))
             #print('generating frame #%d' % frameN)
 
             cv2.imwrite(name, frame)
@@ -53,7 +58,7 @@ def FrameXtract():
             frameN+=1
         else:
             break
-    print('%d frames generated' % frameN)
+    print('%d frames generated' % (frameN-1))
     vid.release()
     print('done')
     return(newDir)
@@ -65,6 +70,21 @@ def mse(img1, img2): #claculates the mean square of the errors of two images
     err = np.sum(diff**2)
     mse = err/(float(h*w))
     return mse, diff #mse is the value of the error, diff is the visual difference between the images
+
+def dirFinder(): #function to locate/create a folder in the user's videos folder. CURRENTLY ONLY WORKS ON WINDOWS
+    absPath = os.path.dirname(__file__)
+    head, tail = os.path.split(absPath)
+    while "Users" not in os.path.basename(head):
+        head, tail = os.path.split(head)
+
+    vidPath = os.path.join(head, tail, "Videos", "CrateringVideos")
+
+    if not os.path.exists(vidPath):
+        os.makedirs(vidPath)
+        print("Created:", vidPath)
+    else:
+        print("Path already exists:", vidPath)
+    return(vidPath)
 
 
 frameFolder = FrameXtract() + '\\' #run FrameXtract and save the directory where the frames are stored
@@ -88,7 +108,7 @@ for i in frDir:
     yData.append(err)
     xData.append(frameN)
     
-    cv2.imshow("%s vs %s = %f" %(lasttitle, i, err), diff) #displays all the difference images
+    #cv2.imshow("%s vs %s = %f" %(lasttitle, i, err), diff) #displays all the difference images
     #print("%s vs %s = %f" %(lasttitle, i, err)) #prints all errors
     
     lasttitle = i
@@ -103,4 +123,3 @@ cv2.destroyAllWindows
 
 #LAST: Found the errors in a real video, but even after plotting, there is no obvious difference in "err" between before and after the jet starts 
 #NEXT: Try using larger time steps, and don't compare every subsaquent frame. 
-#Also NEXT: had to remove large video files from the repo, so now the search function needs to be able to look somewhere else.
