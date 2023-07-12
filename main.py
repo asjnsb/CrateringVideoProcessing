@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 def FrameXtract():
     path = dirFinder()
     dir = os.listdir(path)
+    print("Directory contents:", dir)
     search = [".mp4"]
     search.append(input("Search term: "))
     for i in range(len(search)):
@@ -82,8 +83,8 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
     if not os.path.exists(vidPath):
         os.makedirs(vidPath)
         print("Created:", vidPath)
-    else:
-        print("Path already exists:", vidPath)
+    #else:
+    #   print("Path already exists:", vidPath)
     return(vidPath)
 
 
@@ -121,5 +122,9 @@ plt.show()
 cv2.waitKey(0)
 cv2.destroyAllWindows
 
-#LAST: Found the errors in a real video, but even after plotting, there is no obvious difference in "err" between before and after the jet starts 
-#NEXT: Try using larger time steps, and don't compare every subsaquent frame. 
+#oldLAST: Found the errors in a real video, but even after plotting, there is no obvious difference in "err" between before and after the jet starts 
+#oldNEXT: Try using larger time steps, and don't compare every subsaquent frame.
+#LAST: the program now makes and uses a folder in the user's videos folder.
+#NEXT: figure out why the frame extractor only gets to 224 frames before cv2 throws a warning and stops. 
+#First thing to try: increase OPENCV_FFMPEG_READ_ATTEMPTS
+#Second thing to try: larger time steps. in a 94 second video 224 frames can yield a 0.4s resolution
