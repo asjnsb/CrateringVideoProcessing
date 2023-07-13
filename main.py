@@ -43,8 +43,9 @@ def FrameXtract():
     print('generating frames...')
     frameN = 0
     while(True):
-        ret,frame = vid.read()
-        
+        ret = vid.grab()
+        frame = vid.retrieve()
+        #ret is simply whether or not .read() succesfully returned an image
         if ret:
             if frameN < 10:
                 name = os.path.join(framePath, '%s_frame00%d.png' % (file, frameN))
@@ -126,5 +127,5 @@ cv2.destroyAllWindows
 #oldNEXT: Try using larger time steps, and don't compare every subsaquent frame.
 #LAST: the program now makes and uses a folder in the user's videos folder.
 #NEXT: figure out why the frame extractor only gets to 224 frames before cv2 throws a warning and stops. 
-#First thing to try: increase OPENCV_FFMPEG_READ_ATTEMPTS
+#First thing to try: increase OPENCV_FFMPEG_READ_ATTEMPTS. can't figure out how to do this
 #Second thing to try: larger time steps. in a 94 second video 224 frames can yield a 0.4s resolution
