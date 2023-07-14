@@ -3,6 +3,9 @@ import os
 import numpy as np 
 import matplotlib.pyplot as plt
 
+#CHANGE ME to pick how frequently to generate a frame. fRate = 5: every 5th frame
+fRate = 30
+
 def FrameXtract():
     path = dirFinder()
     dir = os.listdir(path)
@@ -43,24 +46,24 @@ def FrameXtract():
     print('generating frames...')
     frameN = 0
     while(True):
-        ret = vid.grab()
-        frame = vid.retrieve()
-        #ret is simply whether or not .read() succesfully returned an image
-        if ret:
+        if vid.grab():
             if frameN < 10:
-                name = os.path.join(framePath, '%s_frame00%d.png' % (file, frameN))
+                name = os.path.join(framePath, '%s_frame000%d.png' % (file, frameN))
             elif frameN < 100:
+                name = os.path.join(framePath, '%s_frame00%d.png' % (file, frameN))
+            elif frameN < 1000:
                 name = os.path.join(framePath, '%s_frame0%d.png' % (file, frameN))
             else:
                 name = os.path.join(framePath, '%s_frame%d.png' % (file, frameN))
-            #print('generating frame #%d' % frameN)
-
-            cv2.imwrite(name, frame)
-
-            frameN+=1
+            
+            if not(frameN%fRate):
+                ret, frame = vid.retrieve()
+                print('generating frame #%d' % frameN)
+                cv2.imwrite(name, frame)
         else:
             break
-    print('%d frames generated' % (frameN-1))
+        frameN += 1
+    print('%d frames generated' % (frameN))
     vid.release()
     print('done')
     return(newDir)
@@ -123,9 +126,7 @@ plt.show()
 cv2.waitKey(0)
 cv2.destroyAllWindows
 
-#oldLAST: Found the errors in a real video, but even after plotting, there is no obvious difference in "err" between before and after the jet starts 
-#oldNEXT: Try using larger time steps, and don't compare every subsaquent frame.
-#LAST: the program now makes and uses a folder in the user's videos folder.
-#NEXT: figure out why the frame extractor only gets to 224 frames before cv2 throws a warning and stops. 
-#First thing to try: increase OPENCV_FFMPEG_READ_ATTEMPTS. can't figure out how to do this
-#Second thing to try: larger time steps. in a 94 second video 224 frames can yield a 0.4s resolution
+#LAST: the program can skip an arbitrary number of frames, but regarless of the frequency, it halts after 225 frames.
+#NEXT: increase OPENCV_FFMPEG_READ_ATTEMPTS. can't figure out how to do this
+#maybe reduce the number of streams? i.e. strip the audio off and see if it helps
+#also there's an error with lastImg happening, just run it and see what I mean
