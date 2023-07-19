@@ -3,8 +3,8 @@ import os
 import numpy as np 
 import matplotlib.pyplot as plt
 
-#CHANGE ME to pick how frequently to generate a frame. fRate = 5: every 5th frame
-fRate = 30
+#CHANGE ME to pick how frequently to generate a frame. [fRate = 5: every 5th frame]
+fRate = 10
 
 def FrameXtract():
     path = dirFinder()
@@ -48,22 +48,28 @@ def FrameXtract():
     while(True):
         if vid.grab():
             if frameN < 10:
-                name = os.path.join(framePath, '%s_frame000%d.png' % (file, frameN))
+                name = os.path.join(framePath, '%s_frame0000%d.png' % (file, frameN))
             elif frameN < 100:
-                name = os.path.join(framePath, '%s_frame00%d.png' % (file, frameN))
+                name = os.path.join(framePath, '%s_frame000%d.png' % (file, frameN))
             elif frameN < 1000:
+                name = os.path.join(framePath, '%s_frame00%d.png' % (file, frameN))
+            elif frameN < 10000:
                 name = os.path.join(framePath, '%s_frame0%d.png' % (file, frameN))
             else:
                 name = os.path.join(framePath, '%s_frame%d.png' % (file, frameN))
             
+            if not(frameN%1000):
+                print("frameN has surpassed %d" % (frameN))
+
             if not(frameN%fRate):
                 ret, frame = vid.retrieve()
-                print('generating frame #%d' % frameN)
+                #print('generating frame #%d' % frameN)
                 cv2.imwrite(name, frame)
         else:
             break
         frameN += 1
-    print('%d frames generated' % (frameN))
+    
+    print('%d frames generated' % (len(os.listdir(framePath))))
     vid.release()
     print('done')
     return(newDir)
@@ -95,14 +101,15 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
 frameFolder = FrameXtract() + '\\' #run FrameXtract and save the directory where the frames are stored
 frDir = os.listdir(frameFolder)
 
+print("now calculating img differences")
+
 xData = []
 yData = []
 
-frameN = 0
+frameN = 10
 for i in frDir:
     #find the mean square of the errors between the last image and the current one
-    
-    if "frame000." in i:
+    if "frame00000." in i:
         lasttitle = i
         lastImg = cv2.imread(frameFolder + i)
         continue
@@ -126,7 +133,5 @@ plt.show()
 cv2.waitKey(0)
 cv2.destroyAllWindows
 
-#LAST: the program can skip an arbitrary number of frames, but regarless of the frequency, it halts after 225 frames.
-#NEXT: increase OPENCV_FFMPEG_READ_ATTEMPTS. can't figure out how to do this
-#maybe reduce the number of streams? i.e. strip the audio off and see if it helps
-#also there's an error with lastImg happening, just run it and see what I mean
+#LAST: the program can sucessfully get through an entire video. This was accomplished by manually using VLC to convert each video to the same video format it was already in
+#NEXT: the graph does seem to be helpful, but mostly only for the beginning. Try using .rolling() to calculate a rolling average difference to find spikes.
