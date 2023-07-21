@@ -9,9 +9,11 @@ fRate = 10
 def FrameXtract():
     path = dirFinder()
     dir = os.listdir(path)
-    print("Directory contents:", dir)
+    print("Directory contents:")
+    for i in dir:
+        print(i)
     search = [".mp4"]
-    search.append(input("Search term: "))
+    search.append(input("\nSearch term: "))
     for i in range(len(search)):
         search[i] = search[i].lower()
     
@@ -120,6 +122,8 @@ for i in frDir:
     yData.append(err)
     xData.append(frameN)
     
+    
+
     #cv2.imshow("%s vs %s = %f" %(lasttitle, i, err), diff) #displays all the difference images
     #print("%s vs %s = %f" %(lasttitle, i, err)) #prints all errors
     
@@ -128,10 +132,16 @@ for i in frDir:
     frameN += 1
 #end MSE comparisons
 
+print("Average: %f" %(np.ma.average(yData)))
+print("MAX: %f" %(np.max(yData)))
+
+
+
 plt.plot(yData)
 plt.show()
 cv2.waitKey(0)
 cv2.destroyAllWindows
 
 #LAST: the program can sucessfully get through an entire video. This was accomplished by manually using VLC to convert each video to the same video format it was already in
-#NEXT: the graph does seem to be helpful, but mostly only for the beginning. Try using .rolling() to calculate a rolling average difference to find spikes.
+#NEXT: the graph does seem to be helpful, but mostly only for the beginning. compare np.ma.average & np.max to find the spike
+#EVENTUALLY: when the program finds a folder of frames that already exists, it should just use that folder. (If it is at the same frame "rate")
