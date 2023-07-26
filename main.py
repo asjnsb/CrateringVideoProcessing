@@ -31,18 +31,19 @@ def FrameXtract():
         raise SystemExit("Dir is empty")
 
 
-    #create a folder for the frames
-    i = 0
-    while(True):
-        framePath = os.path.join(path, ("%s_Frames_%d" % (file, i)))
-        if not os.path.exists(framePath):
-            print('Folder name: %s' % (framePath))
-            os.makedirs(framePath)
-            newDir = framePath
-            break
-        else:
-            print('Tried: %s' % (framePath))
-            i+=1
+    #check for a folder for the frames
+    framePath = os.path.join(path, ("%s_Frames_fRate%d" % (file, fRate)))
+    if os.path.exists(framePath):
+        print('Folder already exists: %s' % (framePath))
+    else:
+        print('New folder: %s' % (framePath))
+        os.makedirs(framePath)
+        
+    if os.listdir(framePath):
+        print("Folder is populated")
+        return(framePath)
+    else:
+        print("Folder is empty")
 
 
     print('generating frames...')
@@ -74,7 +75,7 @@ def FrameXtract():
     print('%d frames generated' % (len(os.listdir(framePath))))
     vid.release()
     print('done')
-    return(newDir)
+    return(framePath)
 #end of FrameXtract
 
 def mse(img1, img2): #claculates the mean square of the errors of two images
@@ -99,49 +100,48 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
     #   print("Path already exists:", vidPath)
     return(vidPath)
 
+def frameComp(frDir):
+    print("now calculating img differences")
+
+    xData = []
+    yData = []
+
+    frameN = 10
+    for i in frDir:
+        #find the mean square of the errors between the last image and the current one
+        if "frame00000." in i:
+            lasttitle = i
+            lastImg = cv2.imread(frameFolder + i)
+            continue
+        curImg = cv2.imread(frameFolder + i)
+        
+        err, diff = mse(cv2.cvtColor(lastImg, cv2.COLOR_BGR2GRAY), cv2.cvtColor(curImg, cv2.COLOR_BGR2GRAY))
+        
+        yData.append(err)
+        xData.append(frameN)
+        
+        
+
+        #cv2.imshow("%s vs %s = %f" %(lasttitle, i, err), diff) #displays all the difference images
+        #print("%s vs %s = %f" %(lasttitle, i, err)) #prints all errors
+        
+        lasttitle = i
+        lastImg = curImg
+        frameN += 1
+    return(xData, yData)
+#end MSE comparisons
 
 frameFolder = FrameXtract() + '\\' #run FrameXtract and save the directory where the frames are stored
-frDir = os.listdir(frameFolder)
-
-print("now calculating img differences")
-
-xData = []
-yData = []
-
-frameN = 10
-for i in frDir:
-    #find the mean square of the errors between the last image and the current one
-    if "frame00000." in i:
-        lasttitle = i
-        lastImg = cv2.imread(frameFolder + i)
-        continue
-    curImg = cv2.imread(frameFolder + i)
-    
-    err, diff = mse(cv2.cvtColor(lastImg, cv2.COLOR_BGR2GRAY), cv2.cvtColor(curImg, cv2.COLOR_BGR2GRAY))
-    
-    yData.append(err)
-    xData.append(frameN)
-    
-    
-
-    #cv2.imshow("%s vs %s = %f" %(lasttitle, i, err), diff) #displays all the difference images
-    #print("%s vs %s = %f" %(lasttitle, i, err)) #prints all errors
-    
-    lasttitle = i
-    lastImg = curImg
-    frameN += 1
-#end MSE comparisons
+xData, yData = frameComp(os.listdir(frameFolder))
 
 print("Average: %f" %(np.ma.average(yData)))
 print("MAX: %f" %(np.max(yData)))
-
-
+print("Index of MAX: %i" %(yData.index(np.max(yData))))
 
 plt.plot(yData)
 plt.show()
 cv2.waitKey(0)
 cv2.destroyAllWindows
 
-#LAST: the program can sucessfully get through an entire video. This was accomplished by manually using VLC to convert each video to the same video format it was already in
-#NEXT: the graph does seem to be helpful, but mostly only for the beginning. compare np.ma.average & np.max to find the spike
-#EVENTUALLY: when the program finds a folder of frames that already exists, it should just use that folder. (If it is at the same frame "rate")
+#LAST: the program no longer does repeat frame extraction work. .index() works to find the index of a given number
+#NEXT: the program needs to be able to find the FIRST spike, not just MAX. (T19's largest spike is not the start of blasting)
