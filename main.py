@@ -23,6 +23,7 @@ def FrameXtract():
             if dir and all([x in i.lower() for x in search]):
                 vid = cv2.VideoCapture(os.path.join(path, i))
                 file = i[:-4:]
+                plt.title(file)
                 break
             elif i == dir[len(dir)-1]:
                 file = "NotFound"
@@ -50,21 +51,21 @@ def FrameXtract():
     frameN = 0
     while(True):
         if vid.grab():
-            if frameN < 10:
-                name = os.path.join(framePath, '%s_frame0000%d.png' % (file, frameN))
-            elif frameN < 100:
-                name = os.path.join(framePath, '%s_frame000%d.png' % (file, frameN))
-            elif frameN < 1000:
-                name = os.path.join(framePath, '%s_frame00%d.png' % (file, frameN))
-            elif frameN < 10000:
-                name = os.path.join(framePath, '%s_frame0%d.png' % (file, frameN))
-            else:
-                name = os.path.join(framePath, '%s_frame%d.png' % (file, frameN))
-            
             if not(frameN%1000):
                 print("frameN has surpassed %d" % (frameN))
 
             if not(frameN%fRate):
+                if frameN < 10:
+                    name = os.path.join(framePath, '%s_frame0000%d.png' % (file, frameN))
+                elif frameN < 100:
+                    name = os.path.join(framePath, '%s_frame000%d.png' % (file, frameN))
+                elif frameN < 1000:
+                    name = os.path.join(framePath, '%s_frame00%d.png' % (file, frameN))
+                elif frameN < 10000:
+                    name = os.path.join(framePath, '%s_frame0%d.png' % (file, frameN))
+                else:
+                    name = os.path.join(framePath, '%s_frame%d.png' % (file, frameN))
+
                 ret, frame = vid.retrieve()
                 #print('generating frame #%d' % frameN)
                 cv2.imwrite(name, frame)
@@ -106,11 +107,11 @@ def frameComp(frDir):
     xData = []
     yData = []
 
-    frameN = 10
+    frameN = 0
     for i in frDir:
         #find the mean square of the errors between the last image and the current one
         if "frame00000." in i:
-            lasttitle = i
+            #lasttitle = i
             lastImg = cv2.imread(frameFolder + i)
             continue
         curImg = cv2.imread(frameFolder + i)
@@ -120,28 +121,46 @@ def frameComp(frDir):
         yData.append(err)
         xData.append(frameN)
         
-        
-
         #cv2.imshow("%s vs %s = %f" %(lasttitle, i, err), diff) #displays all the difference images
         #print("%s vs %s = %f" %(lasttitle, i, err)) #prints all errors
+        #lasttitle = i
         
-        lasttitle = i
         lastImg = curImg
         frameN += 1
-    return(xData, yData)
+    return(xData, yData, frameN)
 #end MSE comparisons
 
+def mathTime(xData, yData, dir):
+    #print("Average: %f" %(np.ma.average(yData)))
+    #print("MAX: %f" %(np.max(yData)))
+    print("Index of MAX: %i" %(yData.index(np.max(yData))))
+
+    std = np.std(yData)
+
+    plt.plot(yData)
+
+    plt.plot([0,totFrames],[np.ma.average(yData),np.ma.average(yData)])
+    plt.plot([0,totFrames],[np.ma.average(yData)+2*std, np.ma.average(yData)+2*std])
+    plt.show()
+    
+
+    start = input("Start: ")
+    stop = input("Stop: ")
+    cv2.imshow("This should be pre-blasting",cv2.imread(dir+os.listdir(dir)[int(start)]))
+    cv2.imshow("This should be post-blasting",cv2.imread(dir+os.listdir(dir)[int(stop)]))
+    if input("Empty = correct\nNotEmpty = wrong"):
+        start = input("Start: ")
+        stop = input("Stop: ")
+        cv2.imshow("This should be pre-blasting",cv2.imread(dir+os.listdir(dir)[int(start)]))
+        cv2.imshow("This should be post-blasting",cv2.imread(dir+os.listdir(dir)[int(stop)]))
+    cv2.waitKey(0)
+    cv2.destroyAllWindows
+    
+
+
 frameFolder = FrameXtract() + '\\' #run FrameXtract and save the directory where the frames are stored
-xData, yData = frameComp(os.listdir(frameFolder))
+xData, yData, totFrames = frameComp(os.listdir(frameFolder)) #this extra assignment step seems to be necessary to split up the tuple that frameComp returns
+mathTime(xData, yData, frameFolder)
 
-print("Average: %f" %(np.ma.average(yData)))
-print("MAX: %f" %(np.max(yData)))
-print("Index of MAX: %i" %(yData.index(np.max(yData))))
-
-plt.plot(yData)
-plt.show()
-cv2.waitKey(0)
-cv2.destroyAllWindows
-
-#LAST: the program no longer does repeat frame extraction work. .index() works to find the index of a given number
-#NEXT: the program needs to be able to find the FIRST spike, not just MAX. (T19's largest spike is not the start of blasting)
+#LAST: Switching to having a user say where the start and stop is.
+#NEXT: Check that the retry fuction of mathTime() (also rename mathTime()) is working
