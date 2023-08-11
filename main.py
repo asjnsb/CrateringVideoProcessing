@@ -41,8 +41,13 @@ def FrameXtract():
         os.makedirs(framePath)
         
     if os.listdir(framePath):
-        print("Folder is populated")
-        return(framePath)
+        for i in os.listdir(framePath):
+            if not("frame00000" in i):
+                print("Folder is already reduced")
+                return(framePath, 0)
+            else:
+                print("Folder is populated")
+                return(framePath, 1)
     else:
         print("Folder is empty")
 
@@ -76,7 +81,7 @@ def FrameXtract():
     print('%d frames generated' % (len(os.listdir(framePath))))
     vid.release()
     print('done')
-    return(framePath)
+    return(framePath, 1)
 #end of FrameXtract
 
 def mse(img1, img2): #claculates the mean square of the errors of two images
@@ -127,10 +132,7 @@ def frameComp(frDir):
         
         lastImg = curImg
         frameN += 1
-    return(xData, yData, frameN)
-#end MSE comparisons
 
-def mathTime(xData, yData, dir):
     #print("Average: %f" %(np.ma.average(yData)))
     #print("MAX: %f" %(np.max(yData)))
     print("Index of MAX: %i" %(yData.index(np.max(yData))))
@@ -139,28 +141,36 @@ def mathTime(xData, yData, dir):
 
     plt.plot(yData)
 
-    plt.plot([0,totFrames],[np.ma.average(yData),np.ma.average(yData)])
-    plt.plot([0,totFrames],[np.ma.average(yData)+2*std, np.ma.average(yData)+2*std])
+    plt.plot([0,frameN],[np.ma.average(yData),np.ma.average(yData)])
+    plt.plot([0,frameN],[np.ma.average(yData)+2*std, np.ma.average(yData)+2*std])
     plt.show()
     
 
     start = input("Start: ")
     stop = input("Stop: ")
-    cv2.imshow("This should be pre-blasting",cv2.imread(dir+os.listdir(dir)[int(start)]))
-    cv2.imshow("This should be post-blasting",cv2.imread(dir+os.listdir(dir)[int(stop)]))
-    if input("Empty = correct\nNotEmpty = wrong"):
+    cv2.imshow("This should be pre-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(start)]))
+    cv2.imshow("This should be post-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(stop)]))
+    while input("Press ENTER to continue\nOr type any character first to try again\n"):
         start = input("Start: ")
         stop = input("Stop: ")
-        cv2.imshow("This should be pre-blasting",cv2.imread(dir+os.listdir(dir)[int(start)]))
-        cv2.imshow("This should be post-blasting",cv2.imread(dir+os.listdir(dir)[int(stop)]))
+        cv2.imshow("This should be pre-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(start)]))
+        cv2.imshow("This should be post-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(stop)]))
+    
     cv2.waitKey(0)
     cv2.destroyAllWindows
     
+    i = 0
+    for frame in os.listdir(frameFolder):
+        if int(start) > i or i > int(stop):
+            os.remove(frameFolder+frame)
+        i += 1
 
 
-frameFolder = FrameXtract() + '\\' #run FrameXtract and save the directory where the frames are stored
-xData, yData, totFrames = frameComp(os.listdir(frameFolder)) #this extra assignment step seems to be necessary to split up the tuple that frameComp returns
-mathTime(xData, yData, frameFolder)
+frameFolder, compNeeded = FrameXtract() #run FrameXtract and save the directory where the frames are stored
+frameFolder += '//'
+if compNeeded: #this extra assignment step seems to be necessary to split up the tuple that frameComp returns
+    frameComp(os.listdir(frameFolder)) 
 
-#LAST: Switching to having a user say where the start and stop is.
-#NEXT: Check that the retry fuction of mathTime() (also rename mathTime()) is working
+
+#LAST: program works!
+#NEXT: See if you can't clean up the UX, then start incorporating the other programs.
