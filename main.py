@@ -3,8 +3,6 @@ import os
 import numpy as np 
 import matplotlib.pyplot as plt
 
-#CHANGE ME to pick how frequently to generate a frame. [fRate = 5: every 5th frame]
-fRate = 10
 
 def FrameXtract():
     path = dirFinder()
@@ -31,9 +29,11 @@ def FrameXtract():
     else:
         raise SystemExit("Dir is empty")
 
+    print(file+"\n")
+    fSkip = int (input("How many frames to skip at a time? "))
 
     #check for a folder for the frames
-    framePath = os.path.join(path, ("%s_Frames_fRate%d" % (file, fRate)))
+    framePath = os.path.join(path, ("%s_Frames_fSkip%d" % (file, fSkip)))
     if os.path.exists(framePath):
         print('Folder already exists: %s' % (framePath))
     else:
@@ -59,7 +59,7 @@ def FrameXtract():
             if not(frameN%1000):
                 print("frameN has surpassed %d" % (frameN))
 
-            if not(frameN%fRate):
+            if not(frameN%fSkip):
                 if frameN < 10:
                     name = os.path.join(framePath, '%s_frame0000%d.png' % (file, frameN))
                 elif frameN < 100:
@@ -150,21 +150,24 @@ def frameComp(frDir):
     stop = input("Stop: ")
     cv2.imshow("This should be pre-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(start)]))
     cv2.imshow("This should be post-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(stop)]))
+    cv2.waitKey(0)
+    cv2.destroyAllWindows
     while input("Press ENTER to continue\nOr type any character first to try again\n"):
         start = input("Start: ")
         stop = input("Stop: ")
         cv2.imshow("This should be pre-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(start)]))
         cv2.imshow("This should be post-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(stop)]))
+        cv2.waitKey(0)
+        cv2.destroyAllWindows
     
-    cv2.waitKey(0)
-    cv2.destroyAllWindows
     
+    print("Deleting frames...")
     i = 0
     for frame in os.listdir(frameFolder):
         if int(start) > i or i > int(stop):
             os.remove(frameFolder+frame)
         i += 1
-
+    print("Done")
 
 frameFolder, compNeeded = FrameXtract() #run FrameXtract and save the directory where the frames are stored
 frameFolder += '//'
