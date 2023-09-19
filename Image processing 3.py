@@ -3,20 +3,31 @@
 Created on Wed Aug  9 15:39:04 2023
 
 @author: Sudan Devkota
+@editor: Aidan St. John Sep 19 2023 +
 """
 
 import cv2
 import numpy as np
 
-# Load the image
-#image_path = r'C:\Users\Sudan Devkota\Downloads\vada.png'
-image_path = r'C:\Users\Sudan Devkota\Downloads\ufrauli.png'
+#=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=
+# Parameters for cropping the image
+centerXOff = 75
+centerYOff = -75
+vCrop = 0.3
+hCrop = 0.3
+#=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
+# Load the image
+image_path = r'C:/Users/asjns/Videos/CrateringVideos/T16_LHS1_240fps_5-5-23_Frames_fSkip20/T16_LHS1_240fps_5-5-23_frame05360.png'
 image = cv2.imread(image_path)
 
+#Find the size of the image:
+width = image.shape[1]
+height = image.shape[0]
+
 # Define ROI coordinates (top-left and bottom-right)
-roi_tl = (350, 249)  # Example top-left corner (x, y)
-roi_br = (1711, 1034)  # Example bottom-right corner (x, y)
+roi_tl = (int(width*hCrop)+centerXOff, int(height*vCrop)+centerYOff)  # Example top-left corner (x, y)
+roi_br = (int(width*(1-hCrop))+centerXOff, int(height*(1-vCrop))+centerYOff)  # Example bottom-right corner (x, y)
 
 # Crop the image to the ROI
 roi_image = image[roi_tl[1]:roi_br[1], roi_tl[0]:roi_br[0]]
@@ -31,8 +42,12 @@ blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 edges = cv2.Canny(blurred, threshold1=30, threshold2=70)
 
 # Find contours in the edge-detected image
-contours, _ = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+contours, _ = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+drawnContours = cv2.drawContours(roi_image, contours, -1, (0, 255, 0), 1)
+contourFile = open("CountourData.txt", "w")
+for contour in contours:
+    contourFile.write("%s\n"%contour)
+"""
 # Define the y-coordinate threshold for excluding contours below it
 y_threshold = 500  # Adjust this value based on your image
 
@@ -61,7 +76,15 @@ for contour in contours:
             for i in range(len(x_fit) - 1):
                 cv2.line(roi_image, (int(x_fit[i]), int(y_fit[i])), (int(x_fit[i + 1]), int(y_fit[i + 1])), (0, 255, 0), 2)
 
+print("%s, %s" %(x, y))
+"""
+contourFile.close()
+cv2.imshow("show contours", drawnContours)
+#cv2.imshow("raw contours", edges)
 # Display the image with detected parabolic curves in the ROI
-cv2.imshow("Detected Parabolic Curves in ROI", roi_image)
+#cv2.imshow("Detected Parabolic Curves in ROI", roi_image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
+#LAST: simplified the code to find just the contours
+#NEXT: develop a method for picking out the contour we want
