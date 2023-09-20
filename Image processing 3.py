@@ -31,24 +31,26 @@ roi_br = (int(width*(1-hCrop))+centerXOff, int(height*(1-vCrop))+centerYOff)  # 
 
 # Crop the image to the ROI
 roi_image = image[roi_tl[1]:roi_br[1], roi_tl[0]:roi_br[0]]
+roi_width = roi_image.shape[1]
+roi_height = roi_image.shape[0]
 
-# Convert the ROI image to grayscale
-gray = cv2.cvtColor(roi_image, cv2.COLOR_BGR2GRAY)
+gray = cv2.cvtColor(roi_image, cv2.COLOR_BGR2GRAY) # Convert the ROI image to grayscale
+blurred = cv2.GaussianBlur(gray, (5, 5), 0) # Apply Gaussian blur to reduce noise and enhance features
+edges = cv2.Canny(blurred, threshold1=30, threshold2=70) # Apply Canny edge detection to find edges
 
-# Apply Gaussian blur to reduce noise and enhance features
-blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+contours, _ = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE) # Find contours in the edge-detected image, and return all points (CHAIN_APPROX_NONE)
+drawnContours = cv2.drawContours(roi_image, contours, -1, (0, 255, 0), 1) # Draw the contours (img, contours, which contour?, color, line width)
+contourFile = open("CountourData.txt", "w") # create a file for outputing data
 
-# Apply Canny edge detection to find edges
-edges = cv2.Canny(blurred, threshold1=30, threshold2=70)
-
-# Find contours in the edge-detected image
-contours, _ = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-drawnContours = cv2.drawContours(roi_image, contours, -1, (0, 255, 0), 1)
-contourFile = open("CountourData.txt", "w")
 for contour in contours:
-    contourFile.write("%s\n"%contour)
-"""
-# Define the y-coordinate threshold for excluding contours below it
+    #contourFile.write("%s\n"%contour)
+    for point in contour:# point is a list containing a touple, so point[0] points directly to the tuple. point[1] DNE
+        if point[0][0] == (roi_width/2) and point[0][1] > (roi_height/2): 
+            print(point[0])
+        
+
+# Old code for fitting a parabola to the contours
+"""# Define the y-coordinate threshold for excluding contours below it
 y_threshold = 500  # Adjust this value based on your image
 
 # Loop through the detected contours
@@ -76,15 +78,14 @@ for contour in contours:
             for i in range(len(x_fit) - 1):
                 cv2.line(roi_image, (int(x_fit[i]), int(y_fit[i])), (int(x_fit[i + 1]), int(y_fit[i + 1])), (0, 255, 0), 2)
 
-print("%s, %s" %(x, y))
-"""
+print("%s, %s" %(x, y))"""
+
 contourFile.close()
 cv2.imshow("show contours", drawnContours)
-#cv2.imshow("raw contours", edges)
-# Display the image with detected parabolic curves in the ROI
-#cv2.imshow("Detected Parabolic Curves in ROI", roi_image)
+"""# Display the image with detected parabolic curves in the ROI
+#cv2.imshow("Detected Parabolic Curves in ROI", roi_image)"""
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-#LAST: simplified the code to find just the contours
-#NEXT: develop a method for picking out the contour we want
+#LAST: can find points below the center point
+#NEXT: need to correlate a found point to a contour to isolate it from the rest of the contours.
