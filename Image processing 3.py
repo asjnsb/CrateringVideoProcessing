@@ -8,6 +8,7 @@ Created on Wed Aug  9 15:39:04 2023
 
 import cv2
 import numpy as np
+np.set_printoptions(threshold=np.inf) # python truncates the array when printing or writing to file otherwise
 
 #=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=
 # Parameters for cropping the image
@@ -39,15 +40,43 @@ blurred = cv2.GaussianBlur(gray, (5, 5), 0) # Apply Gaussian blur to reduce nois
 edges = cv2.Canny(blurred, threshold1=30, threshold2=70) # Apply Canny edge detection to find edges
 
 contours, _ = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE) # Find contours in the edge-detected image, and return all points (CHAIN_APPROX_NONE)
-drawnContours = cv2.drawContours(roi_image, contours, -1, (0, 255, 0), 1) # Draw the contours (img, contours, which contour?, color, line width)
 contourFile = open("CountourData.txt", "w") # create a file for outputing data
 
+i = 0
+contourIndex = -1 # if this never gets replaced, then cv2.drawContours will draw all the contours
 for contour in contours:
-    #contourFile.write("%s\n"%contour)
-    for point in contour:# point is a list containing a touple, so point[0] points directly to the tuple. point[1] DNE
+    for point in contour:# point is a one-element list containing a touple, so point[0] points directly to the tuple. point[1] DNE
         if point[0][0] == (roi_width/2) and point[0][1] > (roi_height/2): 
-            print(point[0])
-        
+            contourIndex = i
+    i += 1
+
+# write the data to a text file where each line after the first is an x-y coordinate separated by a space and no brackets
+contourFile.write(" X   Y\n")
+for i in contours[contourIndex]:
+    contourFile.write("%s %s\n"%(i[0][0], i[0][1]))
+contourFile.close()
+
+drawnContours = cv2.drawContours(roi_image, contours, contourIndex, (0, 255, 0), 1) # Draw the contours (img, contours, which contour?, color, line width)
+
+# Display the image with contours overlayed
+cv2.imshow("show contours", drawnContours)
+"""# Display the image with detected parabolic curves in the ROI
+cv2.imshow("Detected Parabolic Curves in ROI", roi_image)"""
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+#LAST: can isolate just the contour that is immediatly below the center of the cropped image
+#NEXT: must iterrate over all of the images
+
+
+
+
+
+
+
+
+
+
 
 # Old code for fitting a parabola to the contours
 """# Define the y-coordinate threshold for excluding contours below it
@@ -79,13 +108,3 @@ for contour in contours:
                 cv2.line(roi_image, (int(x_fit[i]), int(y_fit[i])), (int(x_fit[i + 1]), int(y_fit[i + 1])), (0, 255, 0), 2)
 
 print("%s, %s" %(x, y))"""
-
-contourFile.close()
-cv2.imshow("show contours", drawnContours)
-"""# Display the image with detected parabolic curves in the ROI
-#cv2.imshow("Detected Parabolic Curves in ROI", roi_image)"""
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-#LAST: can find points below the center point
-#NEXT: need to correlate a found point to a contour to isolate it from the rest of the contours.
