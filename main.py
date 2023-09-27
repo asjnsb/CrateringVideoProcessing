@@ -33,7 +33,7 @@ def FrameXtract():
     fSkip = int (input("How many frames to skip at a time? "))
 
     #check for a folder for the frames
-    framePath = os.path.join(path, ("%s_Frames_fSkip%d" % (file, fSkip)))
+    framePath = os.path.join(path,"xtractedFrames", ("%s_Frames_fSkip%d" % (file, fSkip)))
     if os.path.exists(framePath):
         print('Folder already exists: %s' % (framePath))
     else:
@@ -176,4 +176,3 @@ if compNeeded: #this extra assignment step seems to be necessary to split up the
 
 
 #LAST: program works!
-#NEXT: See if you can't clean up the UX, then start incorporating the other programs.

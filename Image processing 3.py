@@ -6,6 +6,7 @@ Created on Wed Aug  9 15:39:04 2023
 @editor: Aidan St. John Sep 19 2023 +
 """
 
+import os
 import cv2
 import numpy as np
 np.set_printoptions(threshold=np.inf) # python truncates the array when printing or writing to file otherwise
@@ -16,60 +17,118 @@ centerXOff = 75
 centerYOff = -75
 vCrop = 0.3
 hCrop = 0.3
+# Parameters for limiting the number of iterations through the frame files
+# = None for no limit
+klim = 1
+llim = 5
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
-# Load the image
+
+def imgProcessor(imgPath):
+    # Setup variables to be able to save the data to separate files inside the same folder
+    # xxFolder = path to the containing folder
+    # xxName = just the name of the file
+    # xxPath = path to a file, basically xxFolder/xxName
+    imgFolder, imgName = os.path.split(imgPath)
+    dataFolder = os.path.join(imgFolder, "ContourCoordinates")
+    if not os.path.exists(dataFolder):
+        #print('Folder already exists: %s' % (dataFolder))
+    #else:
+        print('New folder: %s' % (dataFolder))
+        os.makedirs(dataFolder)
+    dataPath = os.path.join(dataFolder, imgName + "_curveData.txt")
+    # Load the image
+    image = cv2.imread(imgPath)
+
+    #Find the size of the image:
+    width = image.shape[1]
+    height = image.shape[0]
+
+    # Define ROI coordinates (top-left and bottom-right)
+    roi_tl = (int(width*hCrop)+centerXOff, int(height*vCrop)+centerYOff)  # Example top-left corner (x, y)
+    roi_br = (int(width*(1-hCrop))+centerXOff, int(height*(1-vCrop))+centerYOff)  # Example bottom-right corner (x, y)
+
+    # Crop the image to the ROI
+    roi_image = image[roi_tl[1]:roi_br[1], roi_tl[0]:roi_br[0]]
+    roi_width = roi_image.shape[1]
+    roi_height = roi_image.shape[0]
+
+    gray = cv2.cvtColor(roi_image, cv2.COLOR_BGR2GRAY) # Convert the ROI image to grayscale
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0) # Apply Gaussian blur to reduce noise and enhance features
+    edges = cv2.Canny(blurred, threshold1=30, threshold2=70) # Apply Canny edge detection to find edges
+
+    contours, _ = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE) # Find contours in the edge-detected image, and return all points (CHAIN_APPROX_NONE)
+    contourFile = open(dataPath, "w") # create a file for outputing data
+
+    i = 0
+    contourIndex = -1 # if this never gets replaced, then cv2.drawContours will draw all the contours
+    for contour in contours:
+        for point in contour:# point is a one-element list containing a touple, so point[0] points directly to the tuple. point[1] DNE
+            if point[0][0] == (roi_width/2) and point[0][1] > (roi_height/2): 
+                contourIndex = i
+        i += 1
+
+    if contourIndex == -1:
+        # don't write the data to a file if all the contours are being drawn
+        contourFile.write("Couldn't isolate a contour")
+    else:
+        # write the data to a text file where each line after the first is an x-y coordinate separated by a space and no brackets
+        contourFile.write(" X   Y\n")
+        for i in contours[contourIndex]:
+            contourFile.write("%s %s\n"%(i[0][0], i[0][1]))
+        contourFile.close()
+
+    drawnContours = cv2.drawContours(roi_image, contours, contourIndex, (0, 255, 0), 1) # Draw the contours (img, contours, which contour?, color, line width)
+
+    # Display the image with contours overlayed
+    cv2.imshow("show contours", drawnContours)
+    """# Display the image with detected parabolic curves in the ROI
+    cv2.imshow("Detected Parabolic Curves in ROI", roi_image)"""
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def dirFinder(): #function to locate/create a folder in the user's videos folder. CURRENTLY ONLY WORKS ON WINDOWS
+    absPath = os.path.dirname(__file__)
+    head, tail = os.path.split(absPath)
+    while "Users" not in os.path.basename(head):
+        head, tail = os.path.split(head)
+
+    vidPath = os.path.join(head, tail, "Videos", "CrateringVideos", "xtractedFrames")
+    
+    if not os.path.exists(vidPath):
+        os.makedirs(vidPath)
+        print("Created:", vidPath)
+        print("Go put stuff in this folder")
+    #else:
+    #   print("Path already exists:", vidPath)
+    return(vidPath)
+
+
 image_path = r'C:/Users/asjns/Videos/CrateringVideos/T16_LHS1_240fps_5-5-23_Frames_fSkip20/T16_LHS1_240fps_5-5-23_frame05360.png'
-image = cv2.imread(image_path)
 
-#Find the size of the image:
-width = image.shape[1]
-height = image.shape[0]
+frameFolder = dirFinder()
 
-# Define ROI coordinates (top-left and bottom-right)
-roi_tl = (int(width*hCrop)+centerXOff, int(height*vCrop)+centerYOff)  # Example top-left corner (x, y)
-roi_br = (int(width*(1-hCrop))+centerXOff, int(height*(1-vCrop))+centerYOff)  # Example bottom-right corner (x, y)
+# nested loops for iterating over every frame image in every frame folder
+k = 0
+for i in os.listdir(frameFolder):
+    l = 0
+    for j in os.listdir(os.path.join(frameFolder, i)):
+        framePath = os.path.join(frameFolder, i, j)
 
-# Crop the image to the ROI
-roi_image = image[roi_tl[1]:roi_br[1], roi_tl[0]:roi_br[0]]
-roi_width = roi_image.shape[1]
-roi_height = roi_image.shape[0]
+        imgProcessor(framePath)
 
-gray = cv2.cvtColor(roi_image, cv2.COLOR_BGR2GRAY) # Convert the ROI image to grayscale
-blurred = cv2.GaussianBlur(gray, (5, 5), 0) # Apply Gaussian blur to reduce noise and enhance features
-edges = cv2.Canny(blurred, threshold1=30, threshold2=70) # Apply Canny edge detection to find edges
+        if llim: # to check that llim != None
+            if l >= llim-1:
+                break
+            l += 1
+    if klim: # to check that klim != None
+        if k >= klim-1:
+            break
+        k += 1
 
-contours, _ = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE) # Find contours in the edge-detected image, and return all points (CHAIN_APPROX_NONE)
-contourFile = open("CountourData.txt", "w") # create a file for outputing data
-
-i = 0
-contourIndex = -1 # if this never gets replaced, then cv2.drawContours will draw all the contours
-for contour in contours:
-    for point in contour:# point is a one-element list containing a touple, so point[0] points directly to the tuple. point[1] DNE
-        if point[0][0] == (roi_width/2) and point[0][1] > (roi_height/2): 
-            contourIndex = i
-    i += 1
-
-# write the data to a text file where each line after the first is an x-y coordinate separated by a space and no brackets
-contourFile.write(" X   Y\n")
-for i in contours[contourIndex]:
-    contourFile.write("%s %s\n"%(i[0][0], i[0][1]))
-contourFile.close()
-
-drawnContours = cv2.drawContours(roi_image, contours, contourIndex, (0, 255, 0), 1) # Draw the contours (img, contours, which contour?, color, line width)
-
-# Display the image with contours overlayed
-cv2.imshow("show contours", drawnContours)
-"""# Display the image with detected parabolic curves in the ROI
-cv2.imshow("Detected Parabolic Curves in ROI", roi_image)"""
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-#LAST: can isolate just the contour that is immediatly below the center of the cropped image
-#NEXT: must iterrate over all of the images
-
-
-
+#LAST: can iterate over all the images and should be able to create a folder for the data files
+#HOLDS: implementing the extra folder for data caused an error on line 44
+#NEXT: tune the edge finder to find fuzzy edges better
 
 
 
