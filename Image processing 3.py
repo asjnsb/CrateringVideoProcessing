@@ -20,7 +20,7 @@ hCrop = 0.3
 # Parameters for limiting the number of iterations through the frame files
 # = None for no limit
 klim = 1
-llim = 5
+llim = None
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 
@@ -52,6 +52,8 @@ def imgProcessor(imgPath):
     roi_image = image[roi_tl[1]:roi_br[1], roi_tl[0]:roi_br[0]]
     roi_width = roi_image.shape[1]
     roi_height = roi_image.shape[0]
+    roi_centerX = int(roi_width/2)
+    roi_centerY = int(roi_height/2)
 
     gray = cv2.cvtColor(roi_image, cv2.COLOR_BGR2GRAY) # Convert the ROI image to grayscale
     blurred = cv2.GaussianBlur(gray, (5, 5), 0) # Apply Gaussian blur to reduce noise and enhance features
@@ -64,9 +66,21 @@ def imgProcessor(imgPath):
     contourIndex = -1 # if this never gets replaced, then cv2.drawContours will draw all the contours
     for contour in contours:
         for point in contour:# point is a one-element list containing a touple, so point[0] points directly to the tuple. point[1] DNE
-            if point[0][0] == (roi_width/2) and point[0][1] > (roi_height/2): 
+            if point[0][0] == (roi_centerX) and point[0][1] > (roi_centerY): 
                 contourIndex = i
         i += 1
+    # if there's no contour below the center, check above the center
+    i = 0
+    prevPoint = 0
+    if contourIndex == -1:
+        for contour in contours:
+            for point in contour:
+                # the below if logic should result in selecting the closest contour that is directly above the center point
+                if (point[0][0] == (roi_centerX) and point[0][1] < (roi_centerY)) and point[0][1] > prevPoint:
+                    prevPoint = point[0][1]
+                    contourIndex = i
+            i += 1
+
 
     if contourIndex == -1:
         # don't write the data to a file if all the contours are being drawn
@@ -80,8 +94,10 @@ def imgProcessor(imgPath):
 
     drawnContours = cv2.drawContours(roi_image, contours, contourIndex, (0, 255, 0), 1) # Draw the contours (img, contours, which contour?, color, line width)
 
+    #draw a small circle in the center of the image
+    drawnContours = cv2.circle(drawnContours, [roi_centerX, roi_centerY], 1, [0,0,255],-1)
     # Display the image with contours overlayed
-    cv2.imshow("show contours", drawnContours)
+    cv2.imshow(imgName, drawnContours)
     """# Display the image with detected parabolic curves in the ROI
     cv2.imshow("Detected Parabolic Curves in ROI", roi_image)"""
     cv2.waitKey(0)
@@ -104,7 +120,7 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
     return(vidPath)
 
 
-image_path = r'C:/Users/asjns/Videos/CrateringVideos/T16_LHS1_240fps_5-5-23_Frames_fSkip20/T16_LHS1_240fps_5-5-23_frame05360.png'
+#image_path = r'C:/Users/asjns/Videos/CrateringVideos/T16_LHS1_240fps_5-5-23_Frames_fSkip20/T16_LHS1_240fps_5-5-23_frame05360.png'
 
 frameFolder = dirFinder()
 
@@ -114,9 +130,10 @@ for i in os.listdir(frameFolder):
     l = 0
     for j in os.listdir(os.path.join(frameFolder, i)):
         framePath = os.path.join(frameFolder, i, j)
-
-        imgProcessor(framePath)
-
+        
+        head, extension = os.path.splitext(framePath)
+        if extension: # this essentially checks that framePath is a file and not just a folder
+            imgProcessor(framePath)
         if llim: # to check that llim != None
             if l >= llim-1:
                 break
@@ -126,9 +143,10 @@ for i in os.listdir(frameFolder):
             break
         k += 1
 
-#LAST: can iterate over all the images and should be able to create a folder for the data files
-#HOLDS: implementing the extra folder for data caused an error on line 44
-#NEXT: tune the edge finder to find fuzzy edges better
+#LAST: program sucessfully exports x-y data for the correct curve, even if it is above the center point.
+#NEXT: use the top edges of the crater to tranlsate the x-y data to a new origin at the top middle of the crater.
+
+#EVENTUALLY: tune the edge finder to find fuzzy edges better
 
 
 
