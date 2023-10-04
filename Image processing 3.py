@@ -18,9 +18,9 @@ centerYOff = -75
 vCrop = 0.3
 hCrop = 0.3
 # Parameters for limiting the number of iterations through the frame files
-# = None for no limit
-klim = 1
-llim = None
+# None, or 0 for no limit
+testLim = 1
+frameLim = 1
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 
@@ -31,10 +31,12 @@ def imgProcessor(imgPath):
     # xxPath = path to a file, basically xxFolder/xxName
     imgFolder, imgName = os.path.split(imgPath)
     dataFolder = os.path.join(imgFolder, "ContourCoordinates")
+
+    #print(imgName) # to keep track of the progress of the program
     if not os.path.exists(dataFolder):
         #print('Folder already exists: %s' % (dataFolder))
     #else:
-        print('New folder: %s' % (dataFolder))
+        print('New folder: %s' % (dataFolder)) # if there isn't a folder already, make one and announce what it is
         os.makedirs(dataFolder)
     dataPath = os.path.join(dataFolder, imgName + "_curveData.txt")
     # Load the image
@@ -90,18 +92,20 @@ def imgProcessor(imgPath):
         contourFile.write(" X   Y\n")
         for i in contours[contourIndex]:
             contourFile.write("%s %s\n"%(i[0][0], i[0][1]))
-        contourFile.close()
+    contourFile.close()
 
     drawnContours = cv2.drawContours(roi_image, contours, contourIndex, (0, 255, 0), 1) # Draw the contours (img, contours, which contour?, color, line width)
 
     #draw a small circle in the center of the image
     drawnContours = cv2.circle(drawnContours, [roi_centerX, roi_centerY], 1, [0,0,255],-1)
+
     # Display the image with contours overlayed
-    cv2.imshow(imgName, drawnContours)
+    #cv2.imshow(imgName, drawnContours)
     """# Display the image with detected parabolic curves in the ROI
     cv2.imshow("Detected Parabolic Curves in ROI", roi_image)"""
-    cv2.waitKey(0)
+    #cv2.waitKey(0)
     cv2.destroyAllWindows()
+    return(dataFolder)
 
 def dirFinder(): #function to locate/create a folder in the user's videos folder. CURRENTLY ONLY WORKS ON WINDOWS
     absPath = os.path.dirname(__file__)
@@ -119,6 +123,20 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
     #   print("Path already exists:", vidPath)
     return(vidPath)
 
+def coodAdjuster(dataPath):
+    head, extension = os.path.splitext(dataPath)
+    Data = []
+    if "txt" in extension: # skips anything that isn't a .txt
+        data = open(dataPath, "r")
+        for i in data.readlines():
+            Data.append(i.split())
+
+    data.close()
+    
+        
+    
+
+
 
 #image_path = r'C:/Users/asjns/Videos/CrateringVideos/T16_LHS1_240fps_5-5-23_Frames_fSkip20/T16_LHS1_240fps_5-5-23_frame05360.png'
 
@@ -127,23 +145,29 @@ frameFolder = dirFinder()
 # nested loops for iterating over every frame image in every frame folder
 k = 0
 for i in os.listdir(frameFolder):
+    print(i)
     l = 0
     for j in os.listdir(os.path.join(frameFolder, i)):
         framePath = os.path.join(frameFolder, i, j)
-        
         head, extension = os.path.splitext(framePath)
-        if extension: # this essentially checks that framePath is a file and not just a folder
-            imgProcessor(framePath)
-        if llim: # to check that llim != None
-            if l >= llim-1:
-                break
-            l += 1
-    if klim: # to check that klim != None
-        if k >= klim-1:
-            break
-        k += 1
 
-#LAST: program sucessfully exports x-y data for the correct curve, even if it is above the center point.
+        if extension: # this essentially checks that framePath is a file and not just a folder
+            dataFolder = imgProcessor(framePath) # imgProcessor returns the contour data path
+            print(dataFolder)
+        if frameLim and l >= frameLim: # to check that frameLim != None
+            break
+        l += 1
+    # iterate over the .txts that were just generated to adjust the data
+    for m in os.listdir(dataFolder): 
+        coodAdjuster(os.path.join(dataFolder,m))
+    
+    # to check that testLim != None
+    if testLim and k >= testLim-1: 
+        break
+    k += 1
+
+#LAST: added a function that will eventually transform the coordinates 
+#NEXT: flip the y-coordinates so that the crater is 'upright'
 #NEXT: use the top edges of the crater to tranlsate the x-y data to a new origin at the top middle of the crater.
 
 #EVENTUALLY: tune the edge finder to find fuzzy edges better
