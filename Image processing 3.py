@@ -9,6 +9,7 @@ Created on Wed Aug  9 15:39:04 2023
 import os
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 np.set_printoptions(threshold=np.inf) # python truncates the array when printing or writing to file otherwise
 
 #=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=
@@ -124,14 +125,23 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
     return(vidPath)
 
 def coodAdjuster(dataPath):
-    head, extension = os.path.splitext(dataPath)
-    Data = []
+    _ , extension = os.path.splitext(dataPath)
+    data = []
+    x = []
+    y = []
     if "txt" in extension: # skips anything that isn't a .txt
-        data = open(dataPath, "r")
-        for i in data.readlines():
-            Data.append(i.split())
-
-    data.close()
+        dataFile = open(dataPath, "r")
+        for i in dataFile.readlines():
+            data.append(i.split())
+    dataFile.close()
+    
+    data.pop(0) # removes the first item in data, which would be the title line of the dataFile
+    
+    for point in data:
+        x.append(point[0])
+        y.append(point[1])
+    plt.plot(x,y)
+    plt.show()
     
         
     
@@ -145,7 +155,7 @@ frameFolder = dirFinder()
 # nested loops for iterating over every frame image in every frame folder
 k = 0
 for i in os.listdir(frameFolder):
-    print(i)
+    print("Frames Folder: " + i)
     l = 0
     for j in os.listdir(os.path.join(frameFolder, i)):
         framePath = os.path.join(frameFolder, i, j)
@@ -153,7 +163,7 @@ for i in os.listdir(frameFolder):
 
         if extension: # this essentially checks that framePath is a file and not just a folder
             dataFolder = imgProcessor(framePath) # imgProcessor returns the contour data path
-            print(dataFolder)
+            print("Data Folder Path:\n" + dataFolder)
         if frameLim and l >= frameLim: # to check that frameLim != None
             break
         l += 1
@@ -166,7 +176,7 @@ for i in os.listdir(frameFolder):
         break
     k += 1
 
-#LAST: added a function that will eventually transform the coordinates 
+#LAST: the coordadjuster function grabs data from the given text file and plots it using matplot lib, but the plot does not look like I expect. 
 #NEXT: flip the y-coordinates so that the crater is 'upright'
 #NEXT: use the top edges of the crater to tranlsate the x-y data to a new origin at the top middle of the crater.
 
