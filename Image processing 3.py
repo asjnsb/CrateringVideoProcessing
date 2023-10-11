@@ -21,7 +21,7 @@ hCrop = 0.3
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
 testLim = 1
-frameLim = 1
+frameLim = 10
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 
@@ -126,6 +126,7 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
 
 def coodAdjuster(dataPath):
     _ , extension = os.path.splitext(dataPath)
+    _ , fileName = os.path.split(dataPath)
     data = []
     x = []
     y = []
@@ -137,10 +138,13 @@ def coodAdjuster(dataPath):
     
     data.pop(0) # removes the first item in data, which would be the title line of the dataFile
     
-    for point in data:
-        x.append(point[0])
-        y.append(point[1])
-    plt.plot(x,y)
+    x, y = zip(*data)
+
+
+
+    # visually display the data
+    plt.scatter(x,y)
+    plt.title(fileName)
     plt.show()
     
         
@@ -176,7 +180,7 @@ for i in os.listdir(frameFolder):
         break
     k += 1
 
-#LAST: the coordadjuster function grabs data from the given text file and plots it using matplot lib, but the plot does not look like I expect. 
+#LAST: streamlined some of the plotting code
 #NEXT: flip the y-coordinates so that the crater is 'upright'
 #NEXT: use the top edges of the crater to tranlsate the x-y data to a new origin at the top middle of the crater.
 
