@@ -3,7 +3,7 @@
 Created on Wed Aug  9 15:39:04 2023
 
 @author: Sudan Devkota
-@editor: Aidan St. John Sep 19 2023 +
+@editor: Aidan St. John Sep 19 2023 ++
 """
 
 import os
@@ -124,37 +124,36 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
     #   print("Path already exists:", vidPath)
     return(vidPath)
 
-def coodAdjuster(dataPath):
-    _ , extension = os.path.splitext(dataPath)
-    _ , fileName = os.path.split(dataPath)
-    data = []
-    x = []
-    y = []
-    if "txt" in extension: # skips anything that isn't a .txt
-        dataFile = open(dataPath, "r")
-        for i in dataFile.readlines():
-            data.append(i.split())
-    dataFile.close()
-    
-    data.pop(0) # removes the first item in data, which would be the title line of the dataFile
-    
-    x, y = zip(*data)
+class coodAdjuster:
+    def __init__ (self):
+        self.data = []
 
-
-
-    # visually display the data
-    plt.scatter(x,y)
-    plt.title(fileName)
-    plt.show()
-    
+    def coodAdjuster(self, dataPath):
+        _ , extension = os.path.splitext(dataPath)
+        _ , fileName = os.path.split(dataPath)
+        x = []
+        y = []
+        if "txt" in extension: # skips anything that isn't a .txt
+            dataFile = open(dataPath, "r")
+            for i in dataFile.readlines():
+                self.data.append(i.split())
+        dataFile.close()
         
-    
+        self.data.pop(0) # removes the first item in data, which would be the title line of the dataFile
+        
+        x, y = zip(*self.data)
 
 
 
-#image_path = r'C:/Users/asjns/Videos/CrateringVideos/T16_LHS1_240fps_5-5-23_Frames_fSkip20/T16_LHS1_240fps_5-5-23_frame05360.png'
+        # visually display the data
+        plt.scatter(x,y)
+        plt.title(fileName)
+        plt.show()
+
 
 frameFolder = dirFinder()
+
+videoData = coodAdjuster
 
 # nested loops for iterating over every frame image in every frame folder
 k = 0
@@ -173,16 +172,15 @@ for i in os.listdir(frameFolder):
         l += 1
     # iterate over the .txts that were just generated to adjust the data
     for m in os.listdir(dataFolder): 
-        coodAdjuster(os.path.join(dataFolder,m))
+        coodAdjuster.coodAdjuster(videoData, os.path.join(dataFolder,m))
     
     # to check that testLim != None
     if testLim and k >= testLim-1: 
         break
     k += 1
 
-#LAST: streamlined some of the plotting code
-#NEXT: flip the y-coordinates so that the crater is 'upright'
-#NEXT: use the top edges of the crater to tranlsate the x-y data to a new origin at the top middle of the crater.
+#LAST: started implementing the #PLAN, tryinig to turn coordAdjuster into a class so that I can keep the data between instances of it being ran in order to plot combine the data from every frame into a single plot.
+#PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
 
 #EVENTUALLY: tune the edge finder to find fuzzy edges better
 
