@@ -124,36 +124,38 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
     #   print("Path already exists:", vidPath)
     return(vidPath)
 
-class coodAdjuster:
+class coodAdjusterClass:
     def __init__ (self):
         self.data = []
+        self.fileName = ''
+        self.x = []
+        self.y = []
 
     def coodAdjuster(self, dataPath):
         _ , extension = os.path.splitext(dataPath)
-        _ , fileName = os.path.split(dataPath)
-        x = []
-        y = []
+        _ , self.fileName = os.path.split(dataPath)
+
+        localData = []
         if "txt" in extension: # skips anything that isn't a .txt
             dataFile = open(dataPath, "r")
             for i in dataFile.readlines():
-                self.data.append(i.split())
+                localData.append(i.split())
         dataFile.close()
         
-        self.data.pop(0) # removes the first item in data, which would be the title line of the dataFile
-        
-        x, y = zip(*self.data)
-
-
+        localData.pop(0) # removes the first item in data, which would be the title line of the dataFile
+        self.data = self.data + localData # moves the data just generated into the data variable that will persist across executions
+        self.x, self.y = zip(*self.data) # splits the data into a format that plt.scatter() can take
 
         # visually display the data
-        plt.scatter(x,y)
-        plt.title(fileName)
-        plt.show()
+        """ plt.scatter(x,y, s=1)
+        plt.title(self.fileName)
+        plt.axis('equal')
+        plt.show() """
 
 
 frameFolder = dirFinder()
 
-videoData = coodAdjuster
+videoData = coodAdjusterClass()
 
 # nested loops for iterating over every frame image in every frame folder
 k = 0
@@ -172,14 +174,24 @@ for i in os.listdir(frameFolder):
         l += 1
     # iterate over the .txts that were just generated to adjust the data
     for m in os.listdir(dataFolder): 
-        coodAdjuster.coodAdjuster(videoData, os.path.join(dataFolder,m))
+        #videoData.data = [] #clears out .data each iteration to prevent more than one frame's data from being drawn at a time
+        videoData.coodAdjuster(os.path.join(dataFolder,m))
     
     # to check that testLim != None
     if testLim and k >= testLim-1: 
         break
     k += 1
 
-#LAST: started implementing the #PLAN, tryinig to turn coordAdjuster into a class so that I can keep the data between instances of it being ran in order to plot combine the data from every frame into a single plot.
+# plot (scatter) the values created in coodAdjuster. 
+# np.asarray(xx, float) ensures that the axies aren't unreadable from too many ticks
+# s=x sets the size of the points
+plt.scatter(np.asarray(videoData.x, float), np.asarray(videoData.y, float), s=1)
+plt.title(videoData.fileName)
+plt.axis('equal')
+plt.show()
+
+#LAST: started implementing the #PLAN, sucessfully turned coordAdjuster into a class so that I can keep the data between instances of it being ran in order to combine the data from every frame into a single plot.
+#NEXT: make the plots easier to read for the user.
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
 
 #EVENTUALLY: tune the edge finder to find fuzzy edges better
