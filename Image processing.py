@@ -20,10 +20,9 @@ vCrop = 0.3
 hCrop = 0.3
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 1
+testLim = 3
 frameLim = 10
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
-
 
 def imgProcessor(imgPath):
     # Setup variables to be able to save the data to separate files inside the same folder
@@ -124,6 +123,15 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
     #   print("Path already exists:", vidPath)
     return(vidPath)
 
+def plotter(x, y, fileName):
+    # plot (scatter) the values created in coodAdjuster. 
+    # np.asarray(xx, float) ensures that the axies aren't unreadable from too many ticks
+    # s=x sets the size of the points
+    plt.scatter(np.asarray(x, float), np.asarray(y, float), s=1)
+    plt.title(fileName)
+    plt.axis('equal')
+    plt.show()
+
 class coodAdjusterClass:
     def __init__ (self):
         self.data = []
@@ -146,12 +154,6 @@ class coodAdjusterClass:
         self.data = self.data + localData # moves the data just generated into the data variable that will persist across executions
         self.x, self.y = zip(*self.data) # splits the data into a format that plt.scatter() can take
 
-        # visually display the data
-        """ plt.scatter(x,y, s=1)
-        plt.title(self.fileName)
-        plt.axis('equal')
-        plt.show() """
-
 
 frameFolder = dirFinder()
 
@@ -168,7 +170,7 @@ for i in os.listdir(frameFolder):
 
         if extension: # this essentially checks that framePath is a file and not just a folder
             dataFolder = imgProcessor(framePath) # imgProcessor returns the contour data path
-            print("Data Folder Path:\n" + dataFolder)
+            #print("Data Folder Path:\n" + dataFolder)
         if frameLim and l >= frameLim: # to check that frameLim != None
             break
         l += 1
@@ -177,29 +179,36 @@ for i in os.listdir(frameFolder):
         #videoData.data = [] #clears out .data each iteration to prevent more than one frame's data from being drawn at a time
         videoData.coodAdjuster(os.path.join(dataFolder,m))
     
+
+    """Loop while still deciding
+    show plot, ask for bounds
+    show plot again within bounds, ask if satisfied 
+    once satisfied, update x y file with trimmed data"""
+    tempX = []
+    tempY = []
+    plotter(videoData.x, videoData.y, videoData.fileName)
+    while input("Enter to continue, or anything else to trim the data\n"):
+        lower = input("Lower bound = ")
+        upper = input("Upper bound = ")
+        for n in videoData.x:
+            if n > lower and n < upper:
+                tempX.append(n)
+                tempY.append(videoData.y[videoData.x.index(n)])
+        plotter(tempX, tempY, videoData.fileName)
+
+
+    
     # to check that testLim != None
     if testLim and k >= testLim-1: 
         break
     k += 1
 
-# plot (scatter) the values created in coodAdjuster. 
-# np.asarray(xx, float) ensures that the axies aren't unreadable from too many ticks
-# s=x sets the size of the points
-plt.scatter(np.asarray(videoData.x, float), np.asarray(videoData.y, float), s=1)
-plt.title(videoData.fileName)
-plt.axis('equal')
-plt.show()
 
 #LAST: started implementing the #PLAN, sucessfully turned coordAdjuster into a class so that I can keep the data between instances of it being ran in order to combine the data from every frame into a single plot.
 #NEXT: make the plots easier to read for the user.
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
 
 #EVENTUALLY: tune the edge finder to find fuzzy edges better
-
-
-
-
-
 
 
 
