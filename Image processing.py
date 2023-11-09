@@ -179,22 +179,23 @@ for i in os.listdir(frameFolder):
         #videoData.data = [] #clears out .data each iteration to prevent more than one frame's data from being drawn at a time
         videoData.coodAdjuster(os.path.join(dataFolder,m))
     
-
-    """Loop while still deciding
-    show plot, ask for bounds
-    show plot again within bounds, ask if satisfied 
-    once satisfied, update x y file with trimmed data"""
     tempX = []
     tempY = []
     plotter(videoData.x, videoData.y, videoData.fileName)
-    while input("Enter to continue, or anything else to trim the data\n"):
+    while input("Enter to continue, or any character to trim the data\n"):
         lower = input("Lower bound = ")
+        lower = int(lower)
         upper = input("Upper bound = ")
+        upper = int(upper)
         for n in videoData.x:
-            if n > lower and n < upper:
+            m = int(n)
+            if m > lower and m < upper:
                 tempX.append(n)
                 tempY.append(videoData.y[videoData.x.index(n)])
         plotter(tempX, tempY, videoData.fileName)
+    #clear out the data between folders
+    videoData.data = []
+
 
 
     
@@ -204,8 +205,8 @@ for i in os.listdir(frameFolder):
     k += 1
 
 
-#LAST: started implementing the #PLAN, sucessfully turned coordAdjuster into a class so that I can keep the data between instances of it being ran in order to combine the data from every frame into a single plot.
-#NEXT: make the plots easier to read for the user.
+#LAST: the plot only shows one folder at a time, and did some int casting
+#NEXT: figure out why it's only trimming/displaying one of the curves present in videoData.Data
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
 
 #EVENTUALLY: tune the edge finder to find fuzzy edges better
