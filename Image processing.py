@@ -20,7 +20,7 @@ vCrop = 0.3
 hCrop = 0.3
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 3
+testLim = 1
 frameLim = 10
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
@@ -34,8 +34,6 @@ def imgProcessor(imgPath):
 
     #print(imgName) # to keep track of the progress of the program
     if not os.path.exists(dataFolder):
-        #print('Folder already exists: %s' % (dataFolder))
-    #else:
         print('New folder: %s' % (dataFolder)) # if there isn't a folder already, make one and announce what it is
         os.makedirs(dataFolder)
     dataPath = os.path.join(dataFolder, imgName + "_curveData.txt")
@@ -139,20 +137,53 @@ class coodAdjusterClass:
         self.x = []
         self.y = []
 
-    def coodAdjuster(self, dataPath):
-        _ , extension = os.path.splitext(dataPath)
-        _ , self.fileName = os.path.split(dataPath)
+    def coodAdjuster(self, dataFolder):
+        # iterate over the .txts that are in dataFolder to adjust the data
+        for self.fileName in os.listdir(dataFolder): 
+            dataPath = os.path.join(dataFolder, self.fileName)
+            _ , extension = os.path.splitext(self.fileName)
 
-        localData = []
-        if "txt" in extension: # skips anything that isn't a .txt
-            dataFile = open(dataPath, "r")
-            for i in dataFile.readlines():
-                localData.append(i.split())
-        dataFile.close()
+            localData = []
+
+            # reads the data in dataPath into the array localData
+            if "txt" in extension: # skips anything that isn't a .txt
+                dataFile = open(dataPath, "r")
+                for i in dataFile.readlines():
+                    localData.append(i.split())
+            
+            dataFile.close()
+            
+            localData.pop(0) # removes the first item in data, which would be the title line of the dataFile
+            self.data = self.data + localData # moves the data just generated into the data variable that will persist across executions
+            self.x, self.y = zip(*self.data) # splits the data into a format that plotter() can take
         
-        localData.pop(0) # removes the first item in data, which would be the title line of the dataFile
-        self.data = self.data + localData # moves the data just generated into the data variable that will persist across executions
-        self.x, self.y = zip(*self.data) # splits the data into a format that plt.scatter() can take
+        plotter(self.x, self.y, self.fileName)
+        
+        while not input("Enter Enter to trim the data, or anything else to continue\n"):
+            tempX = []
+            tempY = []    
+            
+            lower = int(input("Lower bound = "))
+            upper = int(input("Upper bound = "))
+            
+            index = 0
+            for n in self.x:
+                o = int(n)
+                if o > lower and o < upper:
+                    tempX.append(n)
+                    tempY.append(self.y[index])
+                index += 1
+            plotter(tempX, tempY, self.fileName)
+        
+        self.fileReWriter()
+
+        #clear out the data between folders
+        self.data = []
+    
+    def fileReWriter(self):
+        for i in dataFolder.readlines():
+            dataFile = open(dataPath, "w")
+
 
 
 frameFolder = dirFinder()
@@ -166,47 +197,26 @@ for i in os.listdir(frameFolder):
     l = 0
     for j in os.listdir(os.path.join(frameFolder, i)):
         framePath = os.path.join(frameFolder, i, j)
-        head, extension = os.path.splitext(framePath)
+        _ , extension = os.path.splitext(framePath)
 
-        if extension: # this essentially checks that framePath is a file and not just a folder
+        if extension: # this checks that framePath is a file and not just a folder
             dataFolder = imgProcessor(framePath) # imgProcessor returns the contour data path
-            #print("Data Folder Path:\n" + dataFolder)
-        if frameLim and l >= frameLim: # to check that frameLim != None
+
+        # to check that frameLim != None and that it hasn't been exceeded
+        if frameLim and l >= frameLim: 
             break
         l += 1
-    # iterate over the .txts that were just generated to adjust the data
-    for m in os.listdir(dataFolder): 
-        #videoData.data = [] #clears out .data each iteration to prevent more than one frame's data from being drawn at a time
-        videoData.coodAdjuster(os.path.join(dataFolder,m))
+
+    videoData.coodAdjuster(dataFolder)
     
-    tempX = []
-    tempY = []
-    plotter(videoData.x, videoData.y, videoData.fileName)
-    while input("Enter to continue, or any character to trim the data\n"):
-        lower = input("Lower bound = ")
-        lower = int(lower)
-        upper = input("Upper bound = ")
-        upper = int(upper)
-        for n in videoData.x:
-            m = int(n)
-            if m > lower and m < upper:
-                tempX.append(n)
-                tempY.append(videoData.y[videoData.x.index(n)])
-        plotter(tempX, tempY, videoData.fileName)
-    #clear out the data between folders
-    videoData.data = []
-
-
-
-    
-    # to check that testLim != None
+    # to check that testLim != None and that it hasn't been exceeded
     if testLim and k >= testLim-1: 
         break
     k += 1
 
 
-#LAST: the plot only shows one folder at a time, and did some int casting
-#NEXT: figure out why it's only trimming/displaying one of the curves present in videoData.Data
+#LAST: The plot corrently trims and shows all the plots from the trim. Also moved a lot of logic into the coodAdjusterClass
+#NEXT: write the trimmed data back into the .txts it came from while removing the old data
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
 
 #EVENTUALLY: tune the edge finder to find fuzzy edges better
