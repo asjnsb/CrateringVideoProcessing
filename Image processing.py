@@ -21,7 +21,7 @@ hCrop = 0.3
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
 testLim = 1
-frameLim = 10
+frameLim = 0
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -133,15 +133,14 @@ def plotter(x, y, fileName):
 class coodAdjusterClass:
     def __init__ (self):
         self.data = []
-        self.fileName = ''
         self.x = []
         self.y = []
 
     def coodAdjuster(self, dataFolder):
         # iterate over the .txts that are in dataFolder to adjust the data
-        for self.fileName in os.listdir(dataFolder): 
-            dataPath = os.path.join(dataFolder, self.fileName)
-            _ , extension = os.path.splitext(self.fileName)
+        for fileName in os.listdir(dataFolder): 
+            dataPath = os.path.join(dataFolder, fileName)
+            _ , extension = os.path.splitext(fileName)
 
             localData = []
 
@@ -157,7 +156,7 @@ class coodAdjusterClass:
             self.data = self.data + localData # moves the data just generated into the data variable that will persist across executions
             self.x, self.y = zip(*self.data) # splits the data into a format that plotter() can take
         
-        plotter(self.x, self.y, self.fileName)
+        plotter(self.x, self.y, fileName)
         
         while not input("Enter Enter to trim the data, or anything else to continue\n"):
             tempX = []
@@ -173,16 +172,48 @@ class coodAdjusterClass:
                     tempX.append(n)
                     tempY.append(self.y[index])
                 index += 1
-            plotter(tempX, tempY, self.fileName)
+            plotter(tempX, tempY, fileName)
         
-        self.fileReWriter()
+        self.fileReWriter(dataFolder, tempX)
 
         #clear out the data between folders
         self.data = []
     
-    def fileReWriter(self):
-        for i in dataFolder.readlines():
-            dataFile = open(dataPath, "w")
+    def fileReWriter(self, dataFolder, allX):
+            # this contains the same logic at the beginning of coodAdjuster, but for writing rather than reading
+            for fileName in os.listdir(dataFolder):
+                dataPath = os.path.join(dataFolder, fileName)
+                _ , extension = os.path.splitext(fileName)
+                
+                localData = []
+
+                if "txt" in extension:
+                    dataFile = open(dataPath, "r")
+                    for i in dataFile.readlines():
+                        localData.append(i.split())
+                else:
+                    #this is meant to make it so that I don't have to double check for "txt" again
+                    continue
+                dataFile.close()
+
+                localData.pop(0)
+                oldX, oldY = zip(*localData)
+                newX = []
+                newY = []
+                index = 0
+                
+                for x in oldX:
+                    if x in allX:
+                        newX.append(x)
+                        newY.append(oldY[index])
+                    index += 1
+                dataFile = open(dataPath, "w")
+                dataFile.write(" X  Y")
+                for i in range(len(newX)):
+                    dataFile.writelines("\n" + newX[i] + " " + newY[i])
+
+                
+
 
 
 
@@ -215,8 +246,8 @@ for i in os.listdir(frameFolder):
     k += 1
 
 
-#LAST: The plot corrently trims and shows all the plots from the trim. Also moved a lot of logic into the coodAdjusterClass
-#NEXT: write the trimmed data back into the .txts it came from while removing the old data
+#LAST: The program trims the data based on user input and replaces the data in the .txts
+#NEXT: add to this program or, or make a new one that takes the coordinates and adjusts them to place the origin in the center, and flips it right-side up
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
 
 #EVENTUALLY: tune the edge finder to find fuzzy edges better
