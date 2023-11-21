@@ -174,6 +174,11 @@ class coodAdjusterClass:
                 index += 1
             plotter(tempX, tempY, fileName)
         
+        index = 0
+        for i in tempX:
+            if abs(i-lower) < 1:
+                continue
+
         self.fileReWriter(dataFolder, tempX)
 
         #clear out the data between folders
@@ -248,6 +253,7 @@ for i in os.listdir(frameFolder):
 
 #LAST: The program trims the data based on user input and replaces the data in the .txts
 #NEXT: add to this program or, or make a new one that takes the coordinates and adjusts them to place the origin in the center, and flips it right-side up
+#ALSO: This get stuck in line 111 bc my documents folder is not in my C: drive
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
 
 #EVENTUALLY: tune the edge finder to find fuzzy edges better
