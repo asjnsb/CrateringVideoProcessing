@@ -8,6 +8,7 @@ Created on Wed Aug  9 15:39:04 2023
 
 import os
 import cv2
+import statistics
 import numpy as np
 import matplotlib.pyplot as plt
 np.set_printoptions(threshold=np.inf) # python truncates the array when printing or writing to file otherwise
@@ -21,7 +22,7 @@ hCrop = 0.3
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
 testLim = 1
-frameLim = 0
+frameLim = 10
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -153,14 +154,14 @@ class coodAdjusterClass:
             dataFile.close()
             
             localData.pop(0) # removes the first item in data, which would be the title line of the dataFile
-            self.data = self.data + localData # moves the data just generated into the data variable that will persist across executions
+            self.data.extend(localData) # moves the data just generated into the data variable that will persist across executions
             self.x, self.y = zip(*self.data) # splits the data into a format that plotter() can take
         
         plotter(self.x, self.y, fileName)
         
         while not input("Enter Enter to trim the data, or anything else to continue\n"):
-            tempX = []
-            tempY = []    
+            trimmedX = []
+            trimmedY = []    
             
             lower = int(input("Lower bound = "))
             upper = int(input("Upper bound = "))
@@ -169,22 +170,44 @@ class coodAdjusterClass:
             for n in self.x:
                 o = int(n)
                 if o > lower and o < upper:
-                    tempX.append(n)
-                    tempY.append(self.y[index])
+                    trimmedX.append(o)
+                    trimmedY.append(int(self.y[index]))
                 index += 1
-            plotter(tempX, tempY, fileName)
+            plotter(trimmedX, trimmedY, fileName)
         
-        index = 0
-        for i in tempX:
-            if abs(i-lower) < 1:
-                continue
+        #invert the data so it is right side up
+        trimmedY = [i * -1 for i in trimmedY]
 
-        self.fileReWriter(dataFolder, tempX)
+        #find the indices and values of the the points that are on the rightmost and leftmost edge of the data (within a bound)
+        leftEdgeIndices = []
+        rightEdgeIndices = []
+        lEValues = []
+        rEValues = []
+        for i in range(len(trimmedX)):
+            if abs(trimmedX[i]-lower) < 2:
+                leftEdgeIndices.append(i)
+                lEValues.append(trimmedY[i])
+            if abs(trimmedX[i]-upper) < 2:
+                rightEdgeIndices.append(i)
+                rEValues.append(trimmedY[i])
+
+        #find the median of the values for each end of the data
+        leftM = trimmedY[leftEdgeIndices[lEValues.index(statistics.median(lEValues))]]
+        rightM = trimmedY[rightEdgeIndices[rEValues.index(statistics.median(rEValues))]]
+        newYOrigin = (leftM + rightM)/2
+
+        #transform the data to move the origin to the top center of the crater
+        trimmedY = [i-newYOrigin for i in trimmedY]
+        trimmedX = [i-statistics.median(trimmedX) for i in trimmedX]
+        plotter(trimmedX, trimmedY, "newYOrigin")
+        
+
+        self.fileReWriter(dataFolder, trimmedX, trimmedY)
 
         #clear out the data between folders
         self.data = []
     
-    def fileReWriter(self, dataFolder, allX):
+    def fileReWriter(self, dataFolder, trimmedX, trimmedY):
             # this contains the same logic at the beginning of coodAdjuster, but for writing rather than reading
             for fileName in os.listdir(dataFolder):
                 dataPath = os.path.join(dataFolder, fileName)
@@ -192,7 +215,7 @@ class coodAdjusterClass:
                 
                 localData = []
 
-                if "txt" in extension:
+                """if "txt" in extension:
                     dataFile = open(dataPath, "r")
                     for i in dataFile.readlines():
                         localData.append(i.split())
@@ -208,14 +231,27 @@ class coodAdjusterClass:
                 index = 0
                 
                 for x in oldX:
-                    if x in allX:
+                    if x in trimmedX:
                         newX.append(x)
                         newY.append(oldY[index])
-                    index += 1
-                dataFile = open(dataPath, "w")
+                    index += 1 """
+                
+
+
+                if "txt" in extension:
+                    dataFile = open(dataPath, "w")
+                else:
+                    continue
                 dataFile.write(" X  Y")
-                for i in range(len(newX)):
-                    dataFile.writelines("\n" + newX[i] + " " + newY[i])
+                for i in range(len(trimmedX)):
+                    dataFile.writelines("\n" + str(trimmedX[i]) + " " + str(trimmedY[i]))
+                dataFile.close()
+
+                dataFile = open(dataPath, "r")
+                localData = [i.split() for i in dataFile.readlines()]
+                localData.pop(0)
+                x, y = zip(*localData)
+                plotter(x, y, "From the file")
 
                 
 
@@ -251,9 +287,9 @@ for i in os.listdir(frameFolder):
     k += 1
 
 
-#LAST: The program trims the data based on user input and replaces the data in the .txts
-#NEXT: add to this program or, or make a new one that takes the coordinates and adjusts them to place the origin in the center, and flips it right-side up
-#ALSO: This get stuck in line 111 bc my documents folder is not in my C: drive
+#LAST: The program now translates the origin of the data to the top center of the crater, and flips the crater right side up
+#NEXT: The transformed data exists in two lists that contain all of the x and y values, but they need to be split back out into frames before their saved
+#ALSO: This get stuck in line 111 bc my documents folder is not in my C: drive on my desktop
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
 
 #EVENTUALLY: tune the edge finder to find fuzzy edges better
