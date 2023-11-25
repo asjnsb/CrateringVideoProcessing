@@ -21,8 +21,8 @@ vCrop = 0.3
 hCrop = 0.3
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 1
-frameLim = 10
+testLim = 5
+frameLim = 0
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -163,20 +163,17 @@ class coodAdjusterClass:
             trimmedX = []
             trimmedY = []    
             
-            lower = int(input("Lower bound = "))
-            upper = int(input("Upper bound = "))
+            self.lower = int(input("Lower bound = "))
+            self.upper = int(input("Upper bound = "))
             
             index = 0
             for n in self.x:
                 o = int(n)
-                if o > lower and o < upper:
+                if o > self.lower and o < self.upper:
                     trimmedX.append(o)
                     trimmedY.append(int(self.y[index]))
                 index += 1
             plotter(trimmedX, trimmedY, fileName)
-        
-        #invert the data so it is right side up
-        trimmedY = [i * -1 for i in trimmedY]
 
         #find the indices and values of the the points that are on the rightmost and leftmost edge of the data (within a bound)
         leftEdgeIndices = []
@@ -184,30 +181,28 @@ class coodAdjusterClass:
         lEValues = []
         rEValues = []
         for i in range(len(trimmedX)):
-            if abs(trimmedX[i]-lower) < 2:
+            if abs(trimmedX[i]-self.lower) < 2:
                 leftEdgeIndices.append(i)
                 lEValues.append(trimmedY[i])
-            if abs(trimmedX[i]-upper) < 2:
+            if abs(trimmedX[i]-self.upper) < 2:
                 rightEdgeIndices.append(i)
                 rEValues.append(trimmedY[i])
 
-        #find the median of the values for each end of the data
+        #find new location for the origin by averaging the median of both ends of the data
         leftM = trimmedY[leftEdgeIndices[lEValues.index(statistics.median(lEValues))]]
         rightM = trimmedY[rightEdgeIndices[rEValues.index(statistics.median(rEValues))]]
-        newYOrigin = (leftM + rightM)/2
+        self.newYOrigin = (leftM + rightM)/2       
+        self.newXOrigin = statistics.mean(trimmedX)
 
-        #transform the data to move the origin to the top center of the crater
-        trimmedY = [i-newYOrigin for i in trimmedY]
-        trimmedX = [i-statistics.median(trimmedX) for i in trimmedX]
-        plotter(trimmedX, trimmedY, "newYOrigin")
-        
+        #Plot the transformed data
+        plotter([x-self.newXOrigin for x in trimmedX], [-1*(y-self.newYOrigin) for y in trimmedY], "Transformed data")
 
-        self.fileReWriter(dataFolder, trimmedX, trimmedY)
+        self.fileReWriter(dataFolder)
 
         #clear out the data between folders
         self.data = []
     
-    def fileReWriter(self, dataFolder, trimmedX, trimmedY):
+    def fileReWriter(self, dataFolder):
             # this contains the same logic at the beginning of coodAdjuster, but for writing rather than reading
             for fileName in os.listdir(dataFolder):
                 dataPath = os.path.join(dataFolder, fileName)
@@ -215,12 +210,12 @@ class coodAdjusterClass:
                 
                 localData = []
 
-                """if "txt" in extension:
+                if "txt" in extension:
                     dataFile = open(dataPath, "r")
                     for i in dataFile.readlines():
                         localData.append(i.split())
                 else:
-                    #this is meant to make it so that I don't have to double check for "txt" again
+                    #this is meant to make it so that I don't have to double check for "txt" again, but idk if it does
                     continue
                 dataFile.close()
 
@@ -228,30 +223,29 @@ class coodAdjusterClass:
                 oldX, oldY = zip(*localData)
                 newX = []
                 newY = []
-                index = 0
                 
-                for x in oldX:
-                    if x in trimmedX:
-                        newX.append(x)
-                        newY.append(oldY[index])
-                    index += 1 """
+                #trim the data from each file independently
+                for i in range(len(oldX)):
+                    if int(oldX[i]) < self.upper and int(oldX[i]) > self.lower:
+                        newX.append(int(oldX[i]))
+                        newY.append(int(oldY[i]))
                 
+                #adjust the origin and orientation of the data
+                newX = [x-self.newXOrigin for x in newX]
+                newY = [-1*(y-self.newYOrigin) for y in newY]
 
-
-                if "txt" in extension:
-                    dataFile = open(dataPath, "w")
-                else:
-                    continue
+                #write trimmedX and trimmedY to each file
+                dataFile = open(dataPath, "w")
                 dataFile.write(" X  Y")
-                for i in range(len(trimmedX)):
-                    dataFile.writelines("\n" + str(trimmedX[i]) + " " + str(trimmedY[i]))
+                for i in range(len(newX)):
+                    dataFile.writelines("\n" + str(newX[i]) + " " + str(newY[i]))
                 dataFile.close()
 
                 dataFile = open(dataPath, "r")
                 localData = [i.split() for i in dataFile.readlines()]
                 localData.pop(0)
                 x, y = zip(*localData)
-                plotter(x, y, "From the file")
+                #plotter(x, y, "From the file")
 
                 
 
