@@ -19,6 +19,9 @@ centerXOff = 75
 centerYOff = -75
 vCrop = 0.3
 hCrop = 0.3
+# Parameters for the Canny edge detection (30 & 70 originally)
+threshold1 = 5
+threshold2 = 70
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
 testLim = 5
@@ -58,7 +61,7 @@ def imgProcessor(imgPath):
 
     gray = cv2.cvtColor(roi_image, cv2.COLOR_BGR2GRAY) # Convert the ROI image to grayscale
     blurred = cv2.GaussianBlur(gray, (5, 5), 0) # Apply Gaussian blur to reduce noise and enhance features
-    edges = cv2.Canny(blurred, threshold1=30, threshold2=70) # Apply Canny edge detection to find edges
+    edges = cv2.Canny(blurred, threshold1, threshold2) # Apply Canny edge detection to find edges
 
     contours, _ = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE) # Find contours in the edge-detected image, and return all points (CHAIN_APPROX_NONE)
     contourFile = open(dataPath, "w") # create a file for outputing data
@@ -136,6 +139,8 @@ class coodAdjusterClass:
         self.data = []
         self.x = []
         self.y = []
+        self.lower = 0
+        self.upper = 1000000
 
     def coodAdjuster(self, dataFolder):
         # iterate over the .txts that are in dataFolder to adjust the data
