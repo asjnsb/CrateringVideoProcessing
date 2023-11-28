@@ -20,7 +20,7 @@ centerYOff = -75
 vCrop = 0.3
 hCrop = 0.3
 # Parameters for the Canny edge detection (30 & 70 originally)
-threshold1 = 5
+threshold1 = 20
 threshold2 = 70
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
@@ -286,12 +286,10 @@ for i in os.listdir(frameFolder):
     k += 1
 
 
-#LAST: The program now translates the origin of the data to the top center of the crater, and flips the crater right side up
-#NEXT: The transformed data exists in two lists that contain all of the x and y values, but they need to be split back out into frames before their saved
+#LAST: Worked on tuning the edge finder, I think for many videos, there will simply be no hope. The previous settings were really good, and I ended up quite close.
+#NEXT: Pick the best thresholds and go through all the videos
 #ALSO: This get stuck in line 111 bc my documents folder is not in my C: drive on my desktop
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
-
-#EVENTUALLY: tune the edge finder to find fuzzy edges better
 
 
 
