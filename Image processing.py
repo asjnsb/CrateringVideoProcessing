@@ -21,11 +21,13 @@ vCrop = 0.3
 hCrop = 0.3
 # Parameters for the Canny edge detection (30 & 70 originally)
 threshold1 = 20
-threshold2 = 70
+threshold2 = 60
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 5
+testLim = 0
 frameLim = 0
+# Start from a particular test
+testStart = 1
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -264,7 +266,11 @@ videoData = coodAdjusterClass()
 # nested loops for iterating over every frame image in every frame folder
 k = 0
 for i in os.listdir(frameFolder):
-    print("Frames Folder: " + i)
+    if k < testStart:
+        k += 1
+        continue
+    print("Test Number {}".format(k))
+    print("Frames Folder: {}".format(i))
     l = 0
     for j in os.listdir(os.path.join(frameFolder, i)):
         framePath = os.path.join(frameFolder, i, j)
