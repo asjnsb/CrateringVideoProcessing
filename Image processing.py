@@ -8,6 +8,7 @@ Created on Wed Aug  9 15:39:04 2023
 
 import os
 import cv2
+import statistics
 import numpy as np
 import matplotlib.pyplot as plt
 np.set_printoptions(threshold=np.inf) # python truncates the array when printing or writing to file otherwise
@@ -18,10 +19,15 @@ centerXOff = 75
 centerYOff = -75
 vCrop = 0.3
 hCrop = 0.3
+# Parameters for the Canny edge detection (30 & 70 originally)
+threshold1 = 20
+threshold2 = 60
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 1
+testLim = 0
 frameLim = 0
+# Start from a particular test
+testStart = 30
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -57,7 +63,7 @@ def imgProcessor(imgPath):
 
     gray = cv2.cvtColor(roi_image, cv2.COLOR_BGR2GRAY) # Convert the ROI image to grayscale
     blurred = cv2.GaussianBlur(gray, (5, 5), 0) # Apply Gaussian blur to reduce noise and enhance features
-    edges = cv2.Canny(blurred, threshold1=30, threshold2=70) # Apply Canny edge detection to find edges
+    edges = cv2.Canny(blurred, threshold1, threshold2) # Apply Canny edge detection to find edges
 
     contours, _ = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE) # Find contours in the edge-detected image, and return all points (CHAIN_APPROX_NONE)
     contourFile = open(dataPath, "w") # create a file for outputing data
@@ -140,6 +146,8 @@ class coodAdjusterClass:
         self.data = []
         self.x = []
         self.y = []
+        self.lower = 0
+        self.upper = 1000000
 
     def coodAdjuster(self, dataFolder):
         # iterate over the .txts that are in dataFolder to adjust the data
@@ -158,69 +166,104 @@ class coodAdjusterClass:
             dataFile.close()
             
             localData.pop(0) # removes the first item in data, which would be the title line of the dataFile
-            self.data = self.data + localData # moves the data just generated into the data variable that will persist across executions
+            self.data.extend(localData) # moves the data just generated into the data variable that will persist across executions
             self.x, self.y = zip(*self.data) # splits the data into a format that plotter() can take
         
         plotter(self.x, self.y, fileName)
+        trimmedX = []
+        trimmedY = []
         
         while not input("Enter Enter to trim the data, or anything else to continue\n"):
-            tempX = []
-            tempY = []    
+            trimmedX = []
+            trimmedY = []    
             
-            lower = int(input("Lower bound = "))
-            upper = int(input("Upper bound = "))
+            self.lower = int(input("Lower bound = "))
+            self.upper = int(input("Upper bound = "))
             
             index = 0
             for n in self.x:
                 o = int(n)
-                if o > lower and o < upper:
-                    tempX.append(n)
-                    tempY.append(self.y[index])
+                if o > self.lower and o < self.upper:
+                    trimmedX.append(o)
+                    trimmedY.append(int(self.y[index]))
                 index += 1
-            plotter(tempX, tempY, fileName)
-        
-        index = 0
-        for i in tempX:
-            if abs(i-lower) < 1:
-                continue
+            plotter(trimmedX, trimmedY, fileName)
 
-        self.fileReWriter(dataFolder, tempX)
+        #if trimmedX is empty, continue
+        if  not trimmedX:
+            return
+
+        #find the indices and values of the the points that are on the rightmost and leftmost edge of the data (within a bound)
+        leftEdgeIndices = []
+        rightEdgeIndices = []
+        lEValues = []
+        rEValues = []
+        for i in range(len(trimmedX)):
+            if abs(trimmedX[i]-self.lower) < 2:
+                leftEdgeIndices.append(i)
+                lEValues.append(trimmedY[i])
+            if abs(trimmedX[i]-self.upper) < 2:
+                rightEdgeIndices.append(i)
+                rEValues.append(trimmedY[i])
+
+        #find new location for the origin by averaging the median of both ends of the data
+        leftM = statistics.median(lEValues)
+        rightM = statistics.median(rEValues)
+        self.newYOrigin = (leftM + rightM)/2       
+        self.newXOrigin = statistics.mean(trimmedX)
+
+        #Plot the transformed data
+        plotter([x-self.newXOrigin for x in trimmedX], [-1*(y-self.newYOrigin) for y in trimmedY], "Transformed data")
+
+        self.fileReWriter(dataFolder)
 
         #clear out the data between folders
         self.data = []
     
-    def fileReWriter(self, dataFolder, allX):
+    def fileReWriter(self, dataFolder):
             # this contains the same logic at the beginning of coodAdjuster, but for writing rather than reading
             for fileName in os.listdir(dataFolder):
                 dataPath = os.path.join(dataFolder, fileName)
                 _ , extension = os.path.splitext(fileName)
                 
                 localData = []
-
                 if "txt" in extension:
                     dataFile = open(dataPath, "r")
                     for i in dataFile.readlines():
                         localData.append(i.split())
                 else:
-                    #this is meant to make it so that I don't have to double check for "txt" again
+                    #this is meant to make it so that I don't have to double check for "txt" again, but idk if it does
                     continue
                 dataFile.close()
 
                 localData.pop(0)
-                oldX, oldY = zip(*localData)
+                if localData:
+                    oldX, oldY = zip(*localData)
                 newX = []
                 newY = []
-                index = 0
                 
-                for x in oldX:
-                    if x in allX:
-                        newX.append(x)
-                        newY.append(oldY[index])
-                    index += 1
+                #trim the data from each file independently
+                for i in range(len(oldX)):
+                    if int(oldX[i]) < self.upper and int(oldX[i]) > self.lower:
+                        newX.append(int(oldX[i]))
+                        newY.append(int(oldY[i]))
+                
+                #adjust the origin and orientation of the data
+                newX = [x-self.newXOrigin for x in newX]
+                newY = [-1*(y-self.newYOrigin) for y in newY]
+
+                #write trimmedX and trimmedY to each file
                 dataFile = open(dataPath, "w")
                 dataFile.write(" X  Y")
                 for i in range(len(newX)):
-                    dataFile.writelines("\n" + newX[i] + " " + newY[i])
+                    dataFile.writelines("\n" + str(newX[i]) + " " + str(newY[i]))
+                dataFile.close()
+
+                """dataFile = open(dataPath, "r")
+                localData = [i.split() for i in dataFile.readlines()]
+                localData.pop(0)
+                x, y = zip(*localData)
+                plotter(x, y, "From the file")"""
 
                 
 
@@ -234,7 +277,11 @@ videoData = coodAdjusterClass()
 # nested loops for iterating over every frame image in every frame folder
 k = 0
 for i in os.listdir(frameFolder):
-    print("Frames Folder: " + i)
+    if k < testStart:
+        k += 1
+        continue
+    print("Test Number {}".format(k))
+    print("Frames Folder: {}".format(i))
     l = 0
     for j in os.listdir(os.path.join(frameFolder, i)):
         framePath = os.path.join(frameFolder, i, j)
@@ -256,12 +303,10 @@ for i in os.listdir(frameFolder):
     k += 1
 
 
-#LAST: The program trims the data based on user input and replaces the data in the .txts
-#NEXT: add to this program or, or make a new one that takes the coordinates and adjusts them to place the origin in the center, and flips it right-side up
-#ALSO: This get stuck in line 111 bc my documents folder is not in my C: drive
+#LAST: Worked on tuning the edge finder, I think for many videos, there will simply be no hope. The previous settings were really good, and I ended up quite close.
+#NEXT: Pick the best thresholds and go through all the videos
+#ALSO: This get stuck in line 111 bc my documents folder is not in my C: drive on my desktop
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
-
-#EVENTUALLY: tune the edge finder to find fuzzy edges better
 
 
 
