@@ -20,14 +20,14 @@ centerYOff = -75
 vCrop = 0.3
 hCrop = 0.3
 # Parameters for the Canny edge detection (30 & 70 originally)
-threshold1 = 20
-threshold2 = 60
+threshold1 = 10
+threshold2 = 70
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 0
+testLim = 1
 frameLim = 0
 # Start from a particular test
-testStart = 30
+testStart = 0
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -132,13 +132,15 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
     #   print("Path already exists:", vidPath)
     return(vidPath)
 
-def plotter(x, y, fileName):
+def plotter(x, y, fileName, *args):
     # plot (scatter) the values created in coodAdjuster. 
     # np.asarray(xx, float) ensures that the axies aren't unreadable from too many ticks
     # s=x sets the size of the points
     plt.scatter(np.asarray(x, float), np.asarray(y, float), s=1)
     plt.title(fileName)
     plt.axis('equal')
+    if args:
+        plt.savefig(os.path.join("SavedPlots", fileName))
     plt.show()
 
 class coodAdjusterClass:
@@ -213,7 +215,7 @@ class coodAdjusterClass:
         self.newXOrigin = statistics.mean(trimmedX)
 
         #Plot the transformed data
-        plotter([x-self.newXOrigin for x in trimmedX], [-1*(y-self.newYOrigin) for y in trimmedY], "Transformed data")
+        plotter([x-self.newXOrigin for x in trimmedX], [-1*(y-self.newYOrigin) for y in trimmedY], fileName+"_Transformed.png", "Use this to store the filepath")
 
         self.fileReWriter(dataFolder)
 
@@ -303,9 +305,8 @@ for i in os.listdir(frameFolder):
     k += 1
 
 
-#LAST: Worked on tuning the edge finder, I think for many videos, there will simply be no hope. The previous settings were really good, and I ended up quite close.
-#NEXT: Pick the best thresholds and go through all the videos
-#ALSO: This get stuck in line 111 bc my documents folder is not in my C: drive on my desktop
+#LAST: setup the program to save the transformed plot from each test for better diagnosis
+#NEXT: move the save file location to be outside the github. Then go through every video to save its corresponding transformed plot
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
 
 
