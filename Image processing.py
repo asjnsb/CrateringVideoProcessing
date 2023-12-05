@@ -110,6 +110,11 @@ def dirFinder(): #function to locate/create a folder in the user's videos folder
     head, tail = os.path.split(absPath)
     while "Users" not in os.path.basename(head):
         head, tail = os.path.split(head)
+        #hardcoding the program to use my users folder, because my desktop keeps github on a different drive from my users folder
+        if not tail:
+            head = "C:\\Users"
+            tail = "asjns"
+            break
 
     vidPath = os.path.join(head, tail, "Videos", "CrateringVideos", "xtractedFrames")
     
