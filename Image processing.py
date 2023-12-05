@@ -27,7 +27,7 @@ threshold2 = 60
 testLim = 0
 frameLim = 0
 # Start from a particular test
-testStart = 1
+testStart = 30
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -165,6 +165,8 @@ class coodAdjusterClass:
             self.x, self.y = zip(*self.data) # splits the data into a format that plotter() can take
         
         plotter(self.x, self.y, fileName)
+        trimmedX = []
+        trimmedY = []
         
         while not input("Enter Enter to trim the data, or anything else to continue\n"):
             trimmedX = []
@@ -182,6 +184,10 @@ class coodAdjusterClass:
                 index += 1
             plotter(trimmedX, trimmedY, fileName)
 
+        #if trimmedX is empty, continue
+        if  not trimmedX:
+            return
+
         #find the indices and values of the the points that are on the rightmost and leftmost edge of the data (within a bound)
         leftEdgeIndices = []
         rightEdgeIndices = []
@@ -196,8 +202,8 @@ class coodAdjusterClass:
                 rEValues.append(trimmedY[i])
 
         #find new location for the origin by averaging the median of both ends of the data
-        leftM = trimmedY[leftEdgeIndices[lEValues.index(statistics.median(lEValues))]]
-        rightM = trimmedY[rightEdgeIndices[rEValues.index(statistics.median(rEValues))]]
+        leftM = statistics.median(lEValues)
+        rightM = statistics.median(rEValues)
         self.newYOrigin = (leftM + rightM)/2       
         self.newXOrigin = statistics.mean(trimmedX)
 
@@ -216,7 +222,6 @@ class coodAdjusterClass:
                 _ , extension = os.path.splitext(fileName)
                 
                 localData = []
-
                 if "txt" in extension:
                     dataFile = open(dataPath, "r")
                     for i in dataFile.readlines():
@@ -227,7 +232,8 @@ class coodAdjusterClass:
                 dataFile.close()
 
                 localData.pop(0)
-                oldX, oldY = zip(*localData)
+                if localData:
+                    oldX, oldY = zip(*localData)
                 newX = []
                 newY = []
                 
@@ -248,11 +254,11 @@ class coodAdjusterClass:
                     dataFile.writelines("\n" + str(newX[i]) + " " + str(newY[i]))
                 dataFile.close()
 
-                dataFile = open(dataPath, "r")
+                """dataFile = open(dataPath, "r")
                 localData = [i.split() for i in dataFile.readlines()]
                 localData.pop(0)
                 x, y = zip(*localData)
-                #plotter(x, y, "From the file")
+                plotter(x, y, "From the file")"""
 
                 
 
