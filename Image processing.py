@@ -20,14 +20,14 @@ centerYOff = -75
 vCrop = 0.3
 hCrop = 0.3
 # Parameters for the Canny edge detection (30 & 70 originally)
-threshold1 = 10
+threshold1 = 30
 threshold2 = 70
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 1
+testLim = 0
 frameLim = 0
 # Start from a particular test
-testStart = 0
+testStart = 31
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -140,7 +140,7 @@ def plotter(x, y, fileName, *args):
     plt.title(fileName)
     plt.axis('equal')
     if args:
-        plt.savefig(os.path.join("SavedPlots", fileName))
+        plt.savefig(os.path.join(args[0], fileName))
     plt.show()
 
 class coodAdjusterClass:
@@ -164,6 +164,8 @@ class coodAdjusterClass:
                 dataFile = open(dataPath, "r")
                 for i in dataFile.readlines():
                     localData.append(i.split())
+            else:
+                continue
             
             dataFile.close()
             
@@ -214,8 +216,12 @@ class coodAdjusterClass:
         self.newYOrigin = (leftM + rightM)/2       
         self.newXOrigin = statistics.mean(trimmedX)
 
-        #Plot the transformed data
-        plotter([x-self.newXOrigin for x in trimmedX], [-1*(y-self.newYOrigin) for y in trimmedY], fileName+"_Transformed.png", "Use this to store the filepath")
+        #setup the name for the transformed data that is named based on folder that contains the extracted frames
+        plotName, _ = os.path.split(dataFolder)
+        _, plotName = os.path.split(plotName)
+        plotName = plotName + "_Transformed"
+        #Plot the transformed data and save it to dataFolder
+        plotter([x-self.newXOrigin for x in trimmedX], [-1*(y-self.newYOrigin) for y in trimmedY], plotName, dataFolder)
 
         self.fileReWriter(dataFolder)
 
@@ -305,8 +311,8 @@ for i in os.listdir(frameFolder):
     k += 1
 
 
-#LAST: setup the program to save the transformed plot from each test for better diagnosis
-#NEXT: move the save file location to be outside the github. Then go through every video to save its corresponding transformed plot
+#LAST: setup the program to save the transformed plot from each test for better diagnosis, and it now places the images in the contour data folder
+#NEXT: Go through all the videos with default thresholds
 #PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
 
 
