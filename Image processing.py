@@ -27,7 +27,7 @@ threshold2 = 70
 testLim = 0
 frameLim = 0
 # Start from a particular test
-testStart = 31
+testStart = 1
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -170,8 +170,9 @@ class coodAdjusterClass:
             dataFile.close()
             
             localData.pop(0) # removes the first item in data, which would be the title line of the dataFile
-            self.data.extend(localData) # moves the data just generated into the data variable that will persist across executions
-            self.x, self.y = zip(*self.data) # splits the data into a format that plotter() can take
+            if localData:
+                self.data.extend(localData) # moves the data just generated into the data variable that will persist across executions
+                self.x, self.y = zip(*self.data) # splits the data into a format that plotter() can take
         
         plotter(self.x, self.y, fileName)
         trimmedX = []
@@ -220,8 +221,13 @@ class coodAdjusterClass:
         plotName, _ = os.path.split(dataFolder)
         _, plotName = os.path.split(plotName)
         plotName = plotName + "_Transformed"
+        #Setup a variable to store the path to xtractedframes so the plot can be saved there
+        plotFolder, _ = os.path.split(dataFolder)
+        while not ("xtractedFrames" in os.path.basename(plotFolder)):
+            plotFolder, _ = os.path.split(plotFolder)
+        
         #Plot the transformed data and save it to dataFolder
-        plotter([x-self.newXOrigin for x in trimmedX], [-1*(y-self.newYOrigin) for y in trimmedY], plotName, dataFolder)
+        plotter([x-self.newXOrigin for x in trimmedX], [-1*(y-self.newYOrigin) for y in trimmedY], plotName, plotFolder)
 
         self.fileReWriter(dataFolder)
 
@@ -245,8 +251,9 @@ class coodAdjusterClass:
                 dataFile.close()
 
                 localData.pop(0)
-                if localData:
-                    oldX, oldY = zip(*localData)
+                if not localData:
+                    continue
+                oldX, oldY = zip(*localData)
                 newX = []
                 newY = []
                 
@@ -267,16 +274,6 @@ class coodAdjusterClass:
                     dataFile.writelines("\n" + str(newX[i]) + " " + str(newY[i]))
                 dataFile.close()
 
-                """dataFile = open(dataPath, "r")
-                localData = [i.split() for i in dataFile.readlines()]
-                localData.pop(0)
-                x, y = zip(*localData)
-                plotter(x, y, "From the file")"""
-
-                
-
-
-
 
 frameFolder = dirFinder()
 
@@ -288,6 +285,11 @@ for i in os.listdir(frameFolder):
     if k < testStart:
         k += 1
         continue
+    #checks that the program is grabbing a folder, not a file
+    _ , extension = os.path.splitext(i)
+    if extension:
+        continue
+
     print("Test Number {}".format(k))
     print("Frames Folder: {}".format(i))
     l = 0
@@ -311,10 +313,7 @@ for i in os.listdir(frameFolder):
     k += 1
 
 
-#LAST: setup the program to save the transformed plot from each test for better diagnosis, and it now places the images in the contour data folder
-#NEXT: Go through all the videos with default thresholds
-#PLAN: manual selection of crater center & edges: show the user a bunch of plots from one video, then prompt them for the desired values, then draw those values over the plots and double check with the user.
-
+#LAST: plot images now output into the xtractedframes folder, and saved one for each of the tests that are useable at the default threshold values of 30 & 70
 
 
 # Old code for fitting a parabola to the contours
