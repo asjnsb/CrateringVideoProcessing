@@ -20,14 +20,14 @@ centerYOff = -75
 vCrop = 0.3
 hCrop = 0.3
 # Parameters for the Canny edge detection (30 & 70 originally)
-threshold1 = 30
+threshold1 = 20
 threshold2 = 70
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
 testLim = 0
 frameLim = 0
 # Start from a particular test
-testStart = 1
+testStart = 0
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -139,7 +139,7 @@ def plotter(x, y, fileName, *args):
     plt.scatter(np.asarray(x, float), np.asarray(y, float), s=1)
     plt.title(fileName)
     plt.axis('equal')
-    if args:
+    if args: # if args contains info assume its a directory and save the plot there
         plt.savefig(os.path.join(args[0], fileName))
     plt.show()
 
@@ -196,6 +196,7 @@ class coodAdjusterClass:
 
         #if trimmedX is empty, continue
         if  not trimmedX:
+            self.data = []
             return
 
         #find the indices and values of the the points that are on the rightmost and leftmost edge of the data (within a bound)
@@ -312,8 +313,8 @@ for i in os.listdir(frameFolder):
         break
     k += 1
 
-
-#LAST: plot images now output into the xtractedframes folder, and saved one for each of the tests that are useable at the default threshold values of 30 & 70
+#LAST: fixed a bug where coodAdjuster.data would not clear if not cropping the data
+#NEXT: try messing around with the cropping to get better results?
 
 
 # Old code for fitting a parabola to the contours
