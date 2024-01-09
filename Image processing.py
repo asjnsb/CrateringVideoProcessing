@@ -20,7 +20,7 @@ centerYOff = -75
 vCrop = 0.3
 hCrop = 0.3
 # Parameters for the Canny edge detection (30 & 70 originally)
-threshold1 = 20
+threshold1 = 30
 threshold2 = 70
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
@@ -104,10 +104,10 @@ def imgProcessor(imgPath):
     drawnContours = cv2.circle(drawnContours, [roi_centerX, roi_centerY], 1, [0,0,255],-1)
 
     # Display the image with contours overlayed
-    #cv2.imshow(imgName, drawnContours)
+    cv2.imshow(imgName, drawnContours)
     """# Display the image with detected parabolic curves in the ROI
     cv2.imshow("Detected Parabolic Curves in ROI", roi_image)"""
-    #cv2.waitKey(0)
+    cv2.waitKey(0)
     cv2.destroyAllWindows()
     return(dataFolder)
 
