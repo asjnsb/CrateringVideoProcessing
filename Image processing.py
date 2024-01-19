@@ -27,7 +27,7 @@ threshold2 = 70
 testLim = 0
 frameLim = 0
 # Start from a particular test
-testStart = 0
+testStart = 52
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -104,7 +104,7 @@ def imgProcessor(imgPath):
     drawnContours = cv2.circle(drawnContours, [roi_centerX, roi_centerY], 1, [0,0,255],-1)
 
     # Display the image with contours overlayed
-    cv2.imshow(imgName, drawnContours)
+    #cv2.imshow(imgName, drawnContours)
     """# Display the image with detected parabolic curves in the ROI
     cv2.imshow("Detected Parabolic Curves in ROI", roi_image)"""
     cv2.waitKey(0)

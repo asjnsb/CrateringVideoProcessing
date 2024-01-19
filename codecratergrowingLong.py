@@ -121,3 +121,9 @@ np.savetxt('SetA1HOOSH.txt',r, fmt='%1.4e')
 #plt.ylabel("Inch")           
 #plt.show()
 #plt.close
+
+"""
+- Loop through each frame of a given test
+- Loop through different tests (start with only one test)
+- Ensure that the code can find the center of the crater. Currently only works for a symmetric dataset
+"""
