@@ -27,7 +27,7 @@ threshold2 = 70
 testLim = 0
 frameLim = 0
 # Start from a particular test
-testStart = 80
+testStart = 55
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -283,12 +283,13 @@ videoData = coodAdjusterClass()
 # nested loops for iterating over every frame image in every frame folder
 k = 0
 for i in os.listdir(frameFolder):
-    if k < testStart:
-        k += 1
-        continue
     #checks that the program is grabbing a folder, not a file
     _ , extension = os.path.splitext(i)
     if extension:
+        continue
+
+    if k < testStart:
+        k += 1
         continue
 
     print("Test Number {}".format(k))
