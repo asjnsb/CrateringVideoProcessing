@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 #=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 0
-frameLim = 0
+testLim = 1
+frameLim = 1
 # Start from a particular test
 testStart = 0
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
@@ -26,6 +26,23 @@ def dirFinder(): #function to locate a folder in the user's videos folder. CURRE
         return("Path Not Found")
 
     return(path)
+
+# data must be in the form of a list of tuples
+def mathFunc(data):
+    x = []
+    y = []
+    volume = 0.0
+
+    for i in data:
+        x.append(float(i[0]))
+        y.append(float(i[1]))
+
+    xm = sum(x)/len(x)
+    r = [i-xm for i in x]
+    for j in range(len(x))
+        deltaY = abs(y[j+1]-y[j])
+
+        volume += 0.5*deltaY*(math.pi*((r[j+1]+r[j])/2.0)**2.0)
 
 Path = dirFinder()
 if "Path Not Found" in Path:
@@ -51,24 +68,34 @@ for fileName in os.listdir(Path): #iterates over all items in path
 
     #prep for the coming loop
     contourPath = os.path.join(Path, fileName, "ContourCoordinates")
-    data = []
     l = 0
     for contour in os.listdir(contourPath):
-        dataFile = open(os.path.join(contourPath, contour), "r")
-        for i in dataFile.readlines():
-            data.append(i.split())
-        #print(data)
-        if frameLim and l >= frameLim:
-            break
-        l += 1
+        #ensures that the program is only opening text files
+        _, ext = os.path.splitext(contour)
+        if ".txt" in ext:
+            data = []
+            dataFile = open(os.path.join(contourPath, contour), "r")
+            #read all the lines of the data file into a variable as tuples
+            for i in dataFile.readlines():
+                data.append(i.split())
+            #delete the first line of data because it doesn't contain any data
+            data.pop(0)
+
+            mathFunc(data)
+
+
+
+            if frameLim and l >= frameLim-1:
+                break
+            l += 1
     dataFile.close()
     # to check that testLim != None and that it hasn't been exceeded
     if testLim and k >= testLim-1:
         break
     k += 1
 
-#LAST: despite the limits turned off the code iterates through three tests, but hangs on the third frames folder
-#NEXT: fix that, then move on to incorporating the math part
+#LAST: the program sucessfully iterates over all of the text files, and the math has started to be implemented. The for j in len(x) is temporary
+#NEXT: For Dhaka's math he is iterating over a range that is the length of the x data in order to calculate volumes of thin disks that will later be summed.
 
 """old code below""""""
 data = np.loadtxt("SetA1HOOSH.csv", delimiter=',', skiprows=1, unpack=True)
