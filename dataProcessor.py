@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 #=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 1
-frameLim = 1
+testLim = 0
+frameLim = 0
 # Start from a particular test
 testStart = 0
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
@@ -36,17 +36,22 @@ def mathFunc(data):
     for i in data:
         x.append(float(i[0]))
         y.append(float(i[1]))
-
+    
     xm = sum(x)/len(x)
     r = [i-xm for i in x]
-    for j in range(len(x))
-        deltaY = abs(y[j+1]-y[j])
+    for j in range(len(x)):
+        #skip j = 0 so that j-1 is not out of bounds
+        if j == 0:
+            continue
+        deltaY = abs(y[j]-y[j-1])
 
-        volume += 0.5*deltaY*(math.pi*((r[j+1]+r[j])/2.0)**2.0)
+        volume += 0.5*deltaY*(math.pi*((r[j]+r[j-1  ])/2.0)**2.0)
+
+    #print(volume)
 
 Path = dirFinder()
 if "Path Not Found" in Path:
-    print("{} exiting...".format(Path))
+    print("{}, exiting...".format(Path))
     raise SystemExit(0)
 
 # nested loops for looping through all tests and all frames from each test
@@ -81,6 +86,7 @@ for fileName in os.listdir(Path): #iterates over all items in path
             #delete the first line of data because it doesn't contain any data
             data.pop(0)
 
+            print(contour)
             mathFunc(data)
 
 
@@ -94,8 +100,8 @@ for fileName in os.listdir(Path): #iterates over all items in path
         break
     k += 1
 
-#LAST: the program sucessfully iterates over all of the text files, and the math has started to be implemented. The for j in len(x) is temporary
-#NEXT: For Dhaka's math he is iterating over a range that is the length of the x data in order to calculate volumes of thin disks that will later be summed.
+#LAST: the program is pretty much fully working, but there are some problems still.
+#NEXT: Figure out what units the volume calculation is in. There is an error on one contour file because a contour could not be found for that frame, so you need to accomodate the case where the contour file contains "could not isolate contour"
 
 """old code below""""""
 data = np.loadtxt("SetA1HOOSH.csv", delimiter=',', skiprows=1, unpack=True)
