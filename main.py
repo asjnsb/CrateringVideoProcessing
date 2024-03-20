@@ -1,8 +1,7 @@
-import cv2
 import os
+import cv2
 import numpy as np 
 import matplotlib.pyplot as plt
-
 
 def FrameXtract():
     path = dirFinder()
