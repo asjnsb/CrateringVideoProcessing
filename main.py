@@ -13,7 +13,7 @@ def FrameXtract():
     search.append(input("\nSearch term: "))
     for i in range(len(search)):
         search[i] = search[i].lower()
-    
+        
     #find a .mp4 in the current directory
     if dir:
         for i in dir:
