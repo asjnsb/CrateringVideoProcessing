@@ -27,7 +27,7 @@ threshold2 = 70
 testLim = 0
 frameLim = 0
 # Start from a particular test
-testStart = 55
+testStart = 128
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
