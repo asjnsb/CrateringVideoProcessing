@@ -47,7 +47,7 @@ def mathFunc(data):
 
         volume += 0.5*deltaY*(math.pi*((r[j]+r[j-1  ])/2.0)**2.0)
 
-    #print(volume)
+    return(volume)
 
 Path = dirFinder()
 if "Path Not Found" in Path:
@@ -73,6 +73,9 @@ for fileName in os.listdir(Path): #iterates over all items in path
 
     #prep for the coming loop
     contourPath = os.path.join(Path, fileName, "ContourCoordinates")
+    volumeFile = open(os.path.join(Path, "{}_VOLUMES.txt".format(fileName)), "w") #ensures volumeFile is empty
+    volumeFile = open(os.path.join(Path, "{}_VOLUMES.txt".format(fileName)), "a") #allows me to append to volumeFile
+    dataCollector = []
     l = 0
     for contour in os.listdir(contourPath):
         #ensures that the program is only opening text files
@@ -84,24 +87,27 @@ for fileName in os.listdir(Path): #iterates over all items in path
             for i in dataFile.readlines():
                 data.append(i.split())
             #delete the first line of data because it doesn't contain any data
+            if "Couldn't" in data[0]:
+                continue
             data.pop(0)
 
-            print(contour)
-            mathFunc(data)
-
+            #print(contour)
+            vol = mathFunc(data)
+            volumeFile.write("Volume of contour {}: {}\n".format(l, vol))
 
 
             if frameLim and l >= frameLim-1:
                 break
             l += 1
     dataFile.close()
+    volumeFile.close()
     # to check that testLim != None and that it hasn't been exceeded
     if testLim and k >= testLim-1:
         break
     k += 1
 
-#LAST: the program is pretty much fully working, but there are some problems still.
-#NEXT: Figure out what units the volume calculation is in. There is an error on one contour file because a contour could not be found for that frame, so you need to accomodate the case where the contour file contains "could not isolate contour"
+#LAST: The program is fully working, including saving files with the volume data in it, but...
+#NEXT: Still need to figure out what units the volume calculation is in. 
 
 """old code below""""""
 data = np.loadtxt("SetA1HOOSH.csv", delimiter=',', skiprows=1, unpack=True)
