@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 #=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 0
+testLim = 1
 frameLim = 0
 # Start from a particular test
 testStart = 0
@@ -28,14 +28,14 @@ def dirFinder(): #function to locate a folder in the user's videos folder. CURRE
     return(path)
 
 # data must be in the form of a list of tuples
-def mathFunc(data):
+def volFunc(data):
     x = []
     y = []
     volume = 0.0
 
     for i in data:
-        x.append(float(i[0]))
-        y.append(float(i[1]))
+        x.append(float(i[0])/40) # separate out the x and y values and convert from pixels to cm
+        y.append(float(i[1])/40)
     
     xm = sum(x)/len(x)
     r = [i-xm for i in x]
@@ -48,6 +48,26 @@ def mathFunc(data):
         volume += 0.5*deltaY*(math.pi*((r[j]+r[j-1  ])/2.0)**2.0)
 
     return(volume)
+
+def depthFunc(data):
+    x = []
+    y = []
+
+    for i in data:
+        x.append(float(i[0])/40) # separate out the x and y values and convert from pixels to cm
+        y.append(float(i[1])/40)
+    
+    max = y[0]
+    min = y[0]
+    for i in y:
+        if i > max:
+            max = i
+        if i < min:
+            min = i
+    #Print statement for debugging. Feels like depth is not being calculated correctly
+    #print("min = {}, max = {}, diff = {}".format(min, max, max-min))
+    #very simple way of doing this, but we'll start here.
+    return max - min
 
 Path = dirFinder()
 if "Path Not Found" in Path:
@@ -75,13 +95,19 @@ for fileName in os.listdir(Path): #iterates over all items in path
     contourPath = os.path.join(Path, fileName, "ContourCoordinates")
     volumeFile = open(os.path.join(Path, "{}_VOLUMES.txt".format(fileName)), "w") #ensures volumeFile is empty
     volumeFile = open(os.path.join(Path, "{}_VOLUMES.txt".format(fileName)), "a") #allows me to append to volumeFile
+    volumeFile.write("Contour Number, volume of contour (cm^3)\n")
+
+    depthFile = open(os.path.join(Path, "{}_DEPTHS.txt".format(fileName)), "w") #ensures depthFile is empty
+    depthFile = open(os.path.join(Path, "{}_DEPTHS.txt".format(fileName)), "a") #allows me to append to depthFile
+    depthFile.write("Contour Number, Depth of contour (cm)\n")
+
     dataCollector = []
     l = 0
     for contour in os.listdir(contourPath):
         #ensures that the program is only opening text files
         _, ext = os.path.splitext(contour)
         if ".txt" in ext:
-            data = []
+            data = [] 
             dataFile = open(os.path.join(contourPath, contour), "r")
             #read all the lines of the data file into a variable as tuples
             for i in dataFile.readlines():
@@ -92,22 +118,23 @@ for fileName in os.listdir(Path): #iterates over all items in path
             data.pop(0)
 
             #print(contour)
-            vol = mathFunc(data)
-            volumeFile.write("Volume of contour {}: {}\n".format(l, vol))
-
-
+            vol = volFunc(data)
+            volumeFile.write("{}, {:.4f}\n".format(l, vol))
+            depth = depthFunc(data)
+            depthFile.write("{}, {:.4f}\n".format(l, depth))
+            
             if frameLim and l >= frameLim-1:
                 break
             l += 1
     dataFile.close()
     volumeFile.close()
+    depthFile.close()
     # to check that testLim != None and that it hasn't been exceeded
     if testLim and k >= testLim-1:
         break
     k += 1
 
-#LAST: The program is fully working, including saving files with the volume data in it, but...
-#NEXT: Still need to figure out what units the volume calculation is in. 
+#REPORT: Trying to calculate depth. Implemented one method that should work but I'm suspicous of it.
 
 """old code below""""""
 data = np.loadtxt("SetA1HOOSH.csv", delimiter=',', skiprows=1, unpack=True)
