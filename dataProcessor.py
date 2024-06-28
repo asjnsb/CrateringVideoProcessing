@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 #=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=v=
 # Parameters for limiting the number of iterations through the frame files
 # None, or 0 for no limit
-testLim = 1
+testLim = 0
 frameLim = 0
 # Start from a particular test
 testStart = 0
@@ -49,23 +49,24 @@ def volFunc(data):
 
     return(volume)
 
-def depthFunc(data):
+def depthFunc(data,j):
     x = []
     y = []
 
     for i in data:
         x.append(float(i[0])/40) # separate out the x and y values and convert from pixels to cm
         y.append(float(i[1])/40)
-    
+
     max = y[0]
     min = y[0]
+
     for i in y:
         if i > max:
             max = i
         if i < min:
             min = i
     #Print statement for debugging. Feels like depth is not being calculated correctly
-    #print("min = {}, max = {}, diff = {}".format(min, max, max-min))
+    #print("{} min = {:.4f}, max = {:.4f}, diff = {:.4f}".format(j, min, max, max-min))
     #very simple way of doing this, but we'll start here.
     return max - min
 
@@ -120,7 +121,7 @@ for fileName in os.listdir(Path): #iterates over all items in path
             #print(contour)
             vol = volFunc(data)
             volumeFile.write("{}, {:.4f}\n".format(l, vol))
-            depth = depthFunc(data)
+            depth = depthFunc(data,l)
             depthFile.write("{}, {:.4f}\n".format(l, depth))
             
             if frameLim and l >= frameLim-1:
