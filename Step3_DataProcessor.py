@@ -37,15 +37,14 @@ def volFunc(data):
         x.append(float(i[0])/70) # separate out the x and y values and convert from pixels to cm
         y.append(float(i[1])/70)
     
-    xm = sum(x)/len(x)
-    r = [i-xm for i in x]
+    
     for j in range(len(x)):
         #skip j = 0 so that j-1 is not out of bounds
         if j == 0:
             continue
         deltaY = abs(y[j]-y[j-1])
 
-        volume += 0.5*deltaY*(math.pi*((r[j]+r[j-1])/2.0)**2.0)
+        volume += 0.5*deltaY*(math.pi*((x[j]+x[j-1])/2.0)**2.0)
 
     return(volume)
 
