@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def FrameXtract():
     path = dirFinder()
-    dir = os.listdir(path)
+    dir = sorted(os.listdir(path))
     print("Directory contents:")
     for i in dir:
         print(i)
@@ -40,7 +40,7 @@ def FrameXtract():
         os.makedirs(framePath)
         
     if os.listdir(framePath):
-        for i in os.listdir(framePath):
+        for i in sorted(os.listdir(framePath)):
             if not("frame00000" in i):
                 print("Folder is already reduced")
                 return(framePath, 0)
@@ -77,7 +77,7 @@ def FrameXtract():
             break
         frameN += 1
     
-    print('%d frames generated' % (len(os.listdir(framePath))))
+    print('%d frames generated' % (len(sorted(os.listdir(framePath)))))
     vid.release()
     print('done')
     return(framePath, 1)
@@ -136,33 +136,35 @@ def frameComp(frDir):
     #print("MAX: %f" %(np.max(yData)))
     print("Index of MAX: %i" %(yData.index(np.max(yData))))
 
-    std = np.std(yData)
-
     plt.plot(yData)
-
-    plt.plot([0,frameN],[np.ma.average(yData),np.ma.average(yData)])
-    plt.plot([0,frameN],[np.ma.average(yData)+2*std, np.ma.average(yData)+2*std])
     plt.show()
-    
 
-    start = input("Start: ")
-    stop = input("Stop: ")
-    cv2.imshow("This should be pre-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(start)]))
-    cv2.imshow("This should be post-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(stop)]))
-    cv2.waitKey(0)
-    cv2.destroyAllWindows
-    while input("Press ENTER to continue\nOr type any character first to try again\n"):
-        start = input("Start: ")
-        stop = input("Stop: ")
-        cv2.imshow("This should be pre-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(start)]))
-        cv2.imshow("This should be post-blasting",cv2.imread(frameFolder+os.listdir(frameFolder)[int(stop)]))
+    start = int(input("Start: "))
+    stop = int(input("Stop: "))
+
+    frameDir = sorted(os.listdir(frameFolder))
+    if (start < len(yData) and stop < len(yData)):
+        cv2.imshow("This should be pre-blasting",cv2.imread(frameFolder+frameDir[start]))
+        cv2.imshow("This should be post-blasting",cv2.imread(frameFolder+frameDir[stop]))
         cv2.waitKey(0)
-        cv2.destroyAllWindows
+        cv2.destroyAllWindows()
+    else:
+        print("Out of range, try again")
+    while input("Press ENTER to continue\nOr type any character first to try again\n"):
+        start = int(input("Start: "))
+        stop = int(input("Stop: "))
+        if (start < len(yData) and stop < len(yData)):
+            cv2.imshow("This should be pre-blasting",cv2.imread(frameFolder+frameDir[start]))
+            cv2.imshow("This should be post-blasting",cv2.imread(frameFolder+frameDir[stop]))
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        else:
+            print("Out of range, try again")
     
     
     print("Deleting frames...")
     i = 0
-    for frame in os.listdir(frameFolder):
+    for frame in sorted(os.listdir(frameFolder)):
         if int(start) > i or i > int(stop):
             os.remove(frameFolder+frame)
         i += 1
@@ -171,7 +173,7 @@ def frameComp(frDir):
 frameFolder, compNeeded = FrameXtract() #run FrameXtract and save the directory where the frames are stored
 frameFolder += '//'
 if compNeeded: #this extra assignment step seems to be necessary to split up the tuple that frameComp returns
-    frameComp(os.listdir(frameFolder)) 
+    frameComp(sorted(os.listdir(frameFolder)))
 
 
-#LAST: program works!
+#LAST: made adjustments for mac

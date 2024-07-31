@@ -27,7 +27,7 @@ threshold2 = 70
 testLim = 0
 frameLim = 0
 # Start from a particular test
-testStart = 232
+testStart = 234
 #=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=^=
 
 def imgProcessor(imgPath):
@@ -98,17 +98,17 @@ def imgProcessor(imgPath):
             contourFile.write("%s %s\n"%(i[0][0], i[0][1]))
     contourFile.close()
 
-    drawnContours = cv2.drawContours(roi_image, contours, contourIndex, (0, 255, 0), 1) # Draw the contours (img, contours, which contour?, color, line width)
+    #drawnContours = cv2.drawContours(roi_image, contours, contourIndex, (0, 255, 0), 1) # Draw the contours (img, contours, which contour?, color, line width)
 
     #draw a small circle in the center of the image
-    drawnContours = cv2.circle(drawnContours, [roi_centerX, roi_centerY], 1, [0,0,255],-1)
+    #drawnContours = cv2.circle(drawnContours, [roi_centerX, roi_centerY], 1, [0,0,255],-1)
 
     # Display the image with contours overlayed
     #cv2.imshow(imgName, drawnContours)
     """# Display the image with detected parabolic curves in the ROI
     cv2.imshow("Detected Parabolic Curves in ROI", roi_image)"""
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
     return(dataFolder)
 
 def dirFinder(): #function to locate/create a folder in the user's videos folder. CURRENTLY ONLY WORKS ON WINDOWS
@@ -184,6 +184,10 @@ class coodAdjusterClass:
             
             self.lower = int(input("Lower bound = "))
             self.upper = int(input("Upper bound = "))
+
+            #checks that the entered 
+            if self.lower > len(self.X) and self.upper > len(self.x):
+                continue
             
             index = 0
             for n in self.x:
@@ -280,14 +284,15 @@ frameFolder = dirFinder()
 
 videoData = coodAdjusterClass()
 
-# nested loops for iterating over every frame image in every frame folder
+# nested loops for iterating over every image in every frame folder
 k = 0
-for i in os.listdir(frameFolder):
+for i in sorted(os.listdir(frameFolder)):
     #checks that the program is grabbing a folder, not a file
     _ , extension = os.path.splitext(i)
     if extension:
         continue
-
+    if ".DS_Store" in i: # this is a hidden folder on MAC that should be igroned
+        continue
     if k < testStart:
         k += 1
         continue

@@ -34,8 +34,8 @@ def volFunc(data):
     volume = 0.0
 
     for i in data:
-        x.append(float(i[0])/40) # separate out the x and y values and convert from pixels to cm
-        y.append(float(i[1])/40)
+        x.append(float(i[0])/70) # separate out the x and y values and convert from pixels to cm
+        y.append(float(i[1])/70)
     
     xm = sum(x)/len(x)
     r = [i-xm for i in x]
@@ -45,7 +45,7 @@ def volFunc(data):
             continue
         deltaY = abs(y[j]-y[j-1])
 
-        volume += 0.5*deltaY*(math.pi*((r[j]+r[j-1  ])/2.0)**2.0)
+        volume += 0.5*deltaY*(math.pi*((r[j]+r[j-1])/2.0)**2.0)
 
     return(volume)
 
@@ -77,10 +77,14 @@ if "Path Not Found" in Path:
 
 # nested loops for looping through all tests and all frames from each test
 k = 0
-for fileName in os.listdir(Path): #iterates over all items in path
+for fileName in sorted(os.listdir(Path)): #iterates over all items in path
     #skips everything that has an extension (all non-folders)
     _, ext = os.path.splitext(fileName)
     if ext:
+        continue
+
+    # for MAC compatibility
+    if ".DS_Store" in fileName:
         continue
 
     #skips all files up to the test number specified by testStart
@@ -104,7 +108,7 @@ for fileName in os.listdir(Path): #iterates over all items in path
 
     dataCollector = []
     l = 0
-    for contour in os.listdir(contourPath):
+    for contour in sorted(os.listdir(contourPath)):
         #ensures that the program is only opening text files
         _, ext = os.path.splitext(contour)
         if ".txt" in ext:
